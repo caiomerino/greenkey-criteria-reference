@@ -1,8 +1,9 @@
 import React from 'react'
 import {
   Shield, Users, Droplets, Zap, Trash2, ShoppingBag, TreePine,
-  ArrowRight, CheckCircle2, BookOpen, Target, Layers
+  ArrowRight, CheckCircle2, BookOpen, Target, Layers, List
 } from 'lucide-react'
+import Tooltip from '../components/Tooltip'
 
 const SECTION_CARDS = [
   { name: 'Sustainable Management', icon: Shield, count: 24, color: 'bg-blue-50 text-blue-700 border-blue-200', section: 'SUSTAINABLE MANAGEMENT' },
@@ -13,6 +14,15 @@ const SECTION_CARDS = [
   { name: 'Procurement', icon: ShoppingBag, count: 31, color: 'bg-violet-50 text-violet-700 border-violet-200', section: 'PROCUREMENT' },
   { name: 'Living Environment', icon: TreePine, count: 14, color: 'bg-green-50 text-green-700 border-green-200', section: 'LIVING ENVIRONMENT' },
 ]
+
+const CATEGORY_TOOLTIPS = {
+  'HH': 'Hotels & Hostels — fully operational hotels and hostels offering regular hospitality services',
+  'CHP': 'Campsites & Holiday Parks — campsites, eco-camps, parks with rental accommodations',
+  'SA': 'Small Accommodations — serviced accommodations with fewer than 25 lettable units',
+  'CC': 'Conference Centres — fully operational conference centres in a permanent location',
+  'R': 'Restaurants / Cafés — fully operational restaurants and cafés in stand-alone locations',
+  'A': 'Attractions — museums, visitor/interpretation centres, theme parks, and similar venues',
+}
 
 export default function IntroductionView({ data, navigateTo }) {
   const certTable = data.criteria.certification_table
@@ -40,7 +50,7 @@ export default function IntroductionView({ data, navigateTo }) {
           Green Key provides an independent, third-party certification scheme for tourism and hospitality
           establishments, enabling verification of conformity with defined sustainability criteria. The
           programme ensures that these establishments meet robust sustainability standards within the
-          following 7 sections.
+          following <strong className="text-white">7 sections</strong>.
         </p>
       </div>
 
@@ -88,22 +98,26 @@ export default function IntroductionView({ data, navigateTo }) {
           <ArrowRight size={16} className="text-gk-text-muted" />
         </button>
 
-        <div className="flex items-center gap-3 bg-white border border-gk-border rounded-xl p-4">
+        <button
+          onClick={() => navigateTo('criteria', null, null)}
+          className="flex items-center gap-3 bg-white border border-gk-border rounded-xl p-4 hover:border-gk-blue hover:shadow-sm transition-all text-left"
+        >
           <div className="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center">
-            <CheckCircle2 size={18} className="text-amber-600" />
+            <List size={18} className="text-amber-600" />
           </div>
           <div className="flex-1">
-            <span className="text-sm font-bold text-gk-text">139 Criteria</span>
+            <span className="text-sm font-bold text-gk-text">All 139 Criteria</span>
             <p className="text-xs text-gk-text-muted">79 Imperative · 60 Guideline</p>
           </div>
-        </div>
+          <ArrowRight size={16} className="text-gk-text-muted" />
+        </button>
       </div>
 
       {/* Applicable categories */}
       <div className="bg-white rounded-xl border border-gk-border p-6">
         <h2 className="text-lg font-black text-gk-text mb-1">Applicable Establishment Categories</h2>
         <p className="text-sm text-gk-text-muted mb-4">
-          Green Key is applicable to the following specific types of establishments:
+          Green Key is applicable to the following specific types of establishments. <em className="text-gk-text-muted">Hover over each code for a summary.</em>
         </p>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {[
@@ -111,15 +125,17 @@ export default function IntroductionView({ data, navigateTo }) {
             { code: 'CHP', name: 'Campsites & Holiday Parks' },
             { code: 'SA', name: 'Small Accommodations' },
             { code: 'CC', name: 'Conference Centres' },
-            { code: 'R', name: 'Restaurants/Cafés' },
+            { code: 'R', name: 'Restaurants / Cafés' },
             { code: 'A', name: 'Attractions' },
           ].map(cat => (
-            <div key={cat.code} className="bg-gk-surface rounded-lg p-3 border border-gk-border">
-              <span className="inline-block px-2 py-0.5 rounded text-xs font-bold bg-gk-blue text-white mb-1">
-                {cat.code}
-              </span>
-              <p className="text-sm font-medium text-gk-text">{cat.name}</p>
-            </div>
+            <Tooltip key={cat.code} content={CATEGORY_TOOLTIPS[cat.code]} position="top">
+              <div className="bg-gk-surface rounded-lg p-3 border border-gk-border block w-full">
+                <span className="inline-block px-2 py-0.5 rounded text-xs font-bold bg-gk-blue text-white mb-1">
+                  {cat.code}
+                </span>
+                <p className="text-sm font-semibold text-gk-text">{cat.name}</p>
+              </div>
+            </Tooltip>
           ))}
         </div>
       </div>
@@ -128,8 +144,7 @@ export default function IntroductionView({ data, navigateTo }) {
       <div className="bg-white rounded-xl border border-gk-border p-6">
         <h2 className="text-lg font-black text-gk-text mb-1">Imperative and Guideline Criteria</h2>
         <p className="text-sm text-gk-text-muted mb-4">
-          Criteria marked with (I) are imperative criteria, while criteria marked with (G) are guideline
-          criteria. The applicant must conform with all imperative criteria and an increasing number of
+          Criteria marked with <strong className="text-gk-blue">(I)</strong> are <strong>imperative</strong> criteria, while criteria marked with <strong className="text-gk-green-web">(G)</strong> are <strong>guideline</strong> criteria. The applicant must conform with all imperative criteria and an increasing number of
           applicable guideline criteria according to the number of years for which the certificate has
           been held, as per the following table:
         </p>
@@ -148,7 +163,7 @@ export default function IntroductionView({ data, navigateTo }) {
               {certTable.slice(1).map((row, i) => (
                 <tr key={i} className={`border-b border-gk-border ${i % 2 === 0 ? 'bg-white' : 'bg-gk-surface'}`}>
                   {row.map((cell, j) => (
-                    <td key={j} className="px-4 py-3 text-sm text-gk-text">
+                    <td key={j} className={`px-4 py-3 text-sm ${j === 0 ? 'font-semibold text-gk-text' : 'text-gk-text'}`}>
                       {cell}
                     </td>
                   ))}

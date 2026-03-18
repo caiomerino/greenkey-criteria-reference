@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { BookOpen, Search, ChevronDown, ChevronRight } from 'lucide-react'
+import { BookOpen, ChevronDown, ChevronRight } from 'lucide-react'
 
 function highlightText(text, query) {
   if (!query || !text) return text
@@ -9,6 +9,28 @@ function highlightText(text, query) {
       ? <mark key={i}>{part}</mark>
       : part
   )
+}
+
+function formatDefinition(text, searchQuery) {
+  if (!text) return null
+  const paragraphs = text.split('\n').filter(p => p.trim())
+
+  return paragraphs.map((para, j) => {
+    const trimmed = para.trim()
+    // Bullet-like lines
+    if (/^[-–—•]/.test(trimmed)) {
+      return (
+        <p key={j} className="text-sm text-gk-text leading-relaxed mb-1.5 pl-4 relative before:content-[''] before:absolute before:left-0 before:top-[0.6em] before:w-1.5 before:h-1.5 before:bg-gk-blue/30 before:rounded-full">
+          {searchQuery ? highlightText(trimmed.replace(/^[-–—•]\s*/, ''), searchQuery) : trimmed.replace(/^[-–—•]\s*/, '')}
+        </p>
+      )
+    }
+    return (
+      <p key={j} className="text-sm text-gk-text leading-relaxed mb-2 last:mb-0">
+        {searchQuery ? highlightText(trimmed, searchQuery) : trimmed}
+      </p>
+    )
+  })
 }
 
 export default function GlossaryView({ terms, searchQuery }) {
@@ -37,7 +59,7 @@ export default function GlossaryView({ terms, searchQuery }) {
           <h1 className="text-2xl font-black">Glossary</h1>
         </div>
         <p className="text-blue-100 text-sm leading-relaxed max-w-2xl">
-          A glossary clarifying the terminology and concepts used in the Green Key criteria. {terms.length} terms defined.
+          A glossary clarifying the terminology and concepts used in the Green Key criteria. <strong className="text-white">{terms.length} terms</strong> defined.
         </p>
       </div>
 
@@ -64,7 +86,7 @@ export default function GlossaryView({ terms, searchQuery }) {
       {letters.map(letter => (
         <div key={letter} id={`glossary-${letter}`}>
           <div className="sticky top-0 bg-gk-surface z-10 py-2">
-            <span className="inline-block w-10 h-10 rounded-lg bg-gk-blue text-white font-black text-lg flex items-center justify-center">
+            <span className="inline-flex w-10 h-10 rounded-lg bg-gk-blue text-white font-black text-lg items-center justify-center">
               {letter}
             </span>
           </div>
@@ -97,11 +119,7 @@ export default function GlossaryView({ terms, searchQuery }) {
                   </button>
                   {isExpanded && (
                     <div className="border-t border-gk-border bg-slate-50/50 p-4">
-                      {term.definition.split('\n').map((para, j) => (
-                        <p key={j} className="text-sm text-gk-text leading-relaxed mb-2 last:mb-0">
-                          {searchQuery ? highlightText(para, searchQuery) : para}
-                        </p>
-                      ))}
+                      {formatDefinition(term.definition, searchQuery)}
                     </div>
                   )}
                 </div>

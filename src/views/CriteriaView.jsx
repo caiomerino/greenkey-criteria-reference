@@ -34,7 +34,7 @@ const SECTION_SHORT_NAMES = {
   'LIVING ENVIRONMENT': 'Living Environment',
 }
 
-export default function CriteriaView({ sections, activeSection, activeSubsection, searchQuery, glossary, navigateTo }) {
+export default function CriteriaView({ sections, activeSection, activeSubsection, searchQuery, glossary, navigateTo, showAllCriteria }) {
   const sectionRefs = useRef({})
 
   // Filter to show specific section/subsection
@@ -57,8 +57,37 @@ export default function CriteriaView({ sections, activeSection, activeSubsection
     )
   }
 
+  // Calculate total for "All Criteria" header
+  const allTotal = sectionsToShow.reduce((acc, s) =>
+    acc + s.subsections.reduce((a, ss) => a + ss.criteria.length, 0), 0)
+  const allImperative = sectionsToShow.reduce((acc, s) =>
+    acc + s.subsections.reduce((a, ss) => a + ss.criteria.filter(c => c.type === 'imperative').length, 0), 0)
+  const allGuideline = sectionsToShow.reduce((acc, s) =>
+    acc + s.subsections.reduce((a, ss) => a + ss.criteria.filter(c => c.type === 'guideline').length, 0), 0)
+
   return (
     <div className="space-y-8">
+      {/* All Criteria header when in that mode */}
+      {showAllCriteria && !activeSection && (
+        <div className="bg-gradient-to-br from-gk-blue to-gk-blue-dark rounded-2xl p-6 sm:p-8 text-white">
+          <h2 className="text-2xl font-black mb-2">All Criteria</h2>
+          <p className="text-blue-100 text-sm leading-relaxed max-w-2xl mb-3">
+            Complete listing of all Green Key criteria across every section. Use the filters above to narrow by category or type.
+          </p>
+          <div className="flex gap-3 text-xs">
+            <span className="bg-white/20 rounded-full px-3 py-1 font-bold">
+              {allTotal} criteria
+            </span>
+            <span className="bg-white/20 rounded-full px-3 py-1">
+              {allImperative} imperative
+            </span>
+            <span className="bg-white/20 rounded-full px-3 py-1">
+              {allGuideline} guideline
+            </span>
+          </div>
+        </div>
+      )}
+
       {sectionsToShow.map(section => {
         const Icon = SECTION_ICONS[section.name] || FileText
         const gradient = SECTION_COLORS[section.name] || 'from-gray-600 to-gray-700'
@@ -77,19 +106,19 @@ export default function CriteriaView({ sections, activeSection, activeSubsection
         return (
           <div key={section.name}>
             {/* Section header */}
-            <div className={`bg-gradient-to-r ${gradient} rounded-2xl p-6 mb-6 text-white`}>
+            <div className={`bg-gradient-to-r ${gradient} rounded-2xl p-5 sm:p-6 mb-6 text-white`}>
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center">
                   <Icon size={20} />
                 </div>
                 <div>
-                  <h2 className="text-xl font-black">{shortName}</h2>
+                  <h2 className="text-lg sm:text-xl font-black">{shortName}</h2>
                   {section.subsection_summary && (
-                    <p className="text-xs opacity-80 mt-0.5">{section.subsection_summary}</p>
+                    <p className="text-xs opacity-80 mt-0.5 italic">{section.subsection_summary}</p>
                   )}
                 </div>
               </div>
-              <div className="flex gap-4 mt-3 text-xs">
+              <div className="flex flex-wrap gap-2 sm:gap-4 mt-3 text-xs">
                 <span className="bg-white/20 rounded-full px-3 py-1 font-bold">
                   {totalCriteria} criteria
                 </span>
@@ -108,8 +137,8 @@ export default function CriteriaView({ sections, activeSection, activeSubsection
                 {/* Subsection header */}
                 <div className="flex items-center gap-2 mb-4 pb-2 border-b-2 border-gk-border">
                   <h3 className="text-base font-black text-gk-text">{subsection.name}</h3>
-                  <span className="text-xs text-gk-text-muted bg-gk-surface rounded-full px-2 py-0.5">
-                    {subsection.criteria.length} criteria
+                  <span className="text-xs text-gk-text-muted bg-gk-surface rounded-full px-2.5 py-0.5 font-semibold">
+                    {subsection.criteria.length} {subsection.criteria.length === 1 ? 'criterion' : 'criteria'}
                   </span>
                 </div>
 
@@ -130,7 +159,7 @@ export default function CriteriaView({ sections, activeSection, activeSubsection
       })}
 
       {/* Show all sections navigation when viewing a specific section */}
-      {activeSection && (
+      {activeSection && !showAllCriteria && (
         <div className="text-center pt-4">
           <button
             onClick={() => navigateTo('criteria', null, null)}

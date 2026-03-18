@@ -25,7 +25,7 @@ const SECTION_SHORT_NAMES = {
   'LIVING ENVIRONMENT': 'Living Environment',
 }
 
-export default function Sidebar({ data, activeView, activeSection, activeSubsection, navigateTo, isOpen, onClose, filteredSections }) {
+export default function Sidebar({ data, activeView, activeSection, activeSubsection, navigateTo, isOpen, onClose, filteredSections, showAllCriteria }) {
   const [expandedSections, setExpandedSections] = useState({})
 
   const toggleSection = (name) => {
@@ -37,6 +37,9 @@ export default function Sidebar({ data, activeView, activeSection, activeSubsect
     if (!section) return 0
     return section.subsections.reduce((acc, ss) => acc + ss.criteria.length, 0)
   }
+
+  const totalCriteria = filteredSections?.reduce((acc, s) =>
+    acc + s.subsections.reduce((a, ss) => a + ss.criteria.length, 0), 0) || 0
 
   return (
     <aside
@@ -102,13 +105,27 @@ export default function Sidebar({ data, activeView, activeSection, activeSubsect
           </span>
         </div>
 
+        {/* All Criteria link */}
+        <button
+          onClick={() => navigateTo('criteria', null, null)}
+          className={`nav-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm mb-0.5 ${
+            activeView === 'criteria' && showAllCriteria ? 'active' : ''
+          }`}
+        >
+          <List size={15} className="shrink-0 text-gk-blue" />
+          <span className="flex-1">All Criteria</span>
+          <span className="text-[10px] text-gk-text-muted font-bold bg-gk-surface rounded-full px-2 py-0.5">
+            {totalCriteria}
+          </span>
+        </button>
+
         {/* Criteria sections */}
         {data.criteria.sections.map(section => {
           const Icon = SECTION_ICONS[section.name] || FileText
           const shortName = SECTION_SHORT_NAMES[section.name] || section.name
           const isExpanded = expandedSections[section.name]
           const count = getCriteriaCount(section.name)
-          const isActive = activeView === 'criteria' && activeSection === section.name
+          const isActive = activeView === 'criteria' && activeSection === section.name && !showAllCriteria
 
           return (
             <div key={section.name} className="mb-0.5">
@@ -184,7 +201,7 @@ export default function Sidebar({ data, activeView, activeSection, activeSubsect
       {/* Bottom info */}
       <div className="p-3 border-t border-gk-border bg-gk-surface">
         <p className="text-[10px] text-gk-text-muted text-center leading-relaxed">
-          139 Criteria · 7 Sections · 6 Categories
+          <strong>139</strong> Criteria · <strong>7</strong> Sections · <strong>6</strong> Categories
           <br />
           Valid: 1 Oct 2026 – 31 Dec 2031
         </p>

@@ -1,5 +1,5 @@
 import React from 'react'
-import { Building2, Tent, Home, Presentation, UtensilsCrossed, Camera } from 'lucide-react'
+import { Building2, Tent, Home, Presentation, UtensilsCrossed, Camera, Layers } from 'lucide-react'
 
 const CATEGORY_ICONS = {
   'Hotels and Hostels (HH)': Building2,
@@ -25,8 +25,18 @@ export default function CategoriesView({ data }) {
   return (
     <div className="space-y-6">
       {/* Header */}
+      <div className="bg-gradient-to-br from-gk-blue to-gk-blue-dark rounded-2xl p-8 text-white">
+        <div className="flex items-center gap-3 mb-3">
+          <Layers size={28} />
+          <h1 className="text-2xl font-black">Category Definitions</h1>
+        </div>
+        <p className="text-blue-100 text-sm leading-relaxed max-w-2xl">
+          Green Key is applicable to <strong className="text-white">6 specific types</strong> of establishments. Each category has defined eligibility conditions.
+        </p>
+      </div>
+
+      {/* Introduction text */}
       <div className="bg-white rounded-xl border border-gk-border p-6">
-        <h1 className="text-2xl font-black text-gk-text mb-3">Category Definitions</h1>
         <div className="space-y-2">
           {introduction.map((para, i) => (
             <p key={i} className="text-sm text-gk-text leading-relaxed">{para}</p>
@@ -40,6 +50,9 @@ export default function CategoriesView({ data }) {
           const Icon = CATEGORY_ICONS[cat.code] || Building2
           const colorClass = CATEGORY_COLORS[cat.code] || 'border-gk-border bg-white'
           
+          // Extract the abbreviation from the code (e.g. "Hotels and Hostels (HH)" -> "HH")
+          const abbrev = cat.code.match(/\(([^)]+)\)/)?.[1] || ''
+          
           return (
             <div key={i} className={`rounded-xl border-2 overflow-hidden ${colorClass}`}>
               <div className="p-6">
@@ -47,7 +60,14 @@ export default function CategoriesView({ data }) {
                   <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center shadow-sm">
                     <Icon size={20} className="text-gk-blue" />
                   </div>
-                  <h2 className="text-lg font-black text-gk-text">{cat.code}</h2>
+                  <div>
+                    <h2 className="text-lg font-black text-gk-text">{cat.code}</h2>
+                  </div>
+                  {abbrev && (
+                    <span className="ml-auto px-3 py-1 rounded-full text-xs font-bold bg-gk-blue text-white">
+                      {abbrev}
+                    </span>
+                  )}
                 </div>
                 <div className="bg-white rounded-lg p-4 border border-white/50">
                   {cat.definition.split('\n').map((para, j) => (

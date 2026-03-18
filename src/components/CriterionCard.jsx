@@ -1,5 +1,15 @@
 import React, { useState } from 'react'
-import { ChevronDown, ChevronRight, Info, AlertCircle } from 'lucide-react'
+import { ChevronDown, ChevronRight, Info } from 'lucide-react'
+import Tooltip from './Tooltip'
+
+const CATEGORY_LABELS = {
+  'HH': 'Hotels & Hostels',
+  'CHP': 'Campsites & Holiday Parks',
+  'SA': 'Small Accommodations',
+  'CC': 'Conference Centres',
+  'R': 'Restaurants / Cafés',
+  'A': 'Attractions',
+}
 
 function highlightText(text, query) {
   if (!query || !text) return text
@@ -14,28 +24,64 @@ function highlightText(text, query) {
 function formatNotes(text) {
   if (!text) return null
   
-  // Split into paragraphs and render
   const paragraphs = text.split('\n').filter(p => p.trim())
   
   return paragraphs.map((para, idx) => {
     const trimmed = para.trim()
     
-    // Check if this is a section heading (Relevance, Expectations, Audit evidence, etc.)
-    if (/^(Relevance|Expectations for implementation|Audit evidence|ⓘ Note on national adaptation)/.test(trimmed)) {
-      const isNational = trimmed.startsWith('ⓘ')
+    // Section headings: Relevance, Expectations for implementation, Audit evidence
+    if (/^(Relevance)$/i.test(trimmed)) {
       return (
-        <div key={idx} className={`mt-4 first:mt-0 ${isNational ? 'bg-amber-50 border border-amber-200 rounded-lg p-3 mt-4' : ''}`}>
-          <h4 className={`text-xs font-bold uppercase tracking-wider mb-2 ${
-            isNational ? 'text-amber-700' : 'text-gk-blue'
-          }`}>
-            {isNational && <Info size={12} className="inline mr-1 -mt-0.5" />}
+        <div key={idx} className="mt-5 first:mt-0 mb-2">
+          <h4 className="text-xs font-black uppercase tracking-wider text-gk-blue border-b border-gk-blue/20 pb-1">
             {trimmed}
           </h4>
         </div>
       )
     }
     
-    // Regular paragraph  
+    if (/^Expectations for implementation$/i.test(trimmed)) {
+      return (
+        <div key={idx} className="mt-5 first:mt-0 mb-2">
+          <h4 className="text-xs font-black uppercase tracking-wider text-gk-green-web border-b border-gk-green-web/20 pb-1">
+            {trimmed}
+          </h4>
+        </div>
+      )
+    }
+
+    if (/^Audit evidence$/i.test(trimmed)) {
+      return (
+        <div key={idx} className="mt-5 first:mt-0 mb-2">
+          <h4 className="text-xs font-black uppercase tracking-wider text-slate-500 border-b border-slate-300/50 pb-1">
+            {trimmed}
+          </h4>
+        </div>
+      )
+    }
+    
+    // National adaptation note
+    if (/^ⓘ Note on national adaptation/.test(trimmed)) {
+      return (
+        <div key={idx} className="bg-amber-50 border border-amber-200 rounded-lg p-3 mt-4">
+          <h4 className="text-xs font-black uppercase tracking-wider mb-2 text-amber-700">
+            <Info size={12} className="inline mr-1 -mt-0.5" />
+            {trimmed}
+          </h4>
+        </div>
+      )
+    }
+
+    // Bullet-like lines starting with dash or special chars
+    if (/^[-–—•]/.test(trimmed) || /^[a-z]\)/.test(trimmed)) {
+      return (
+        <p key={idx} className="text-sm text-gk-text leading-relaxed mb-1.5 last:mb-0 pl-4 relative before:content-[''] before:absolute before:left-0 before:top-[0.6em] before:w-1.5 before:h-1.5 before:bg-gk-blue/30 before:rounded-full">
+          {trimmed.replace(/^[-–—•]\s*/, '')}
+        </p>
+      )
+    }
+    
+    // Regular paragraph
     return (
       <p key={idx} className="text-sm text-gk-text leading-relaxed mb-2 last:mb-0">
         {trimmed}
@@ -65,7 +111,7 @@ export default function CriterionCard({ criterion, searchQuery }) {
         
         <div className="flex-1 min-w-0">
           {/* Criterion text */}
-          <p className="text-sm font-medium text-gk-text leading-relaxed pr-4">
+          <p className="text-sm font-semibold text-gk-text leading-relaxed pr-4">
             {searchQuery ? highlightText(statement, searchQuery) : statement}
           </p>
           
@@ -78,19 +124,23 @@ export default function CriterionCard({ criterion, searchQuery }) {
               {type === 'imperative' ? 'Imperative' : 'Guideline'}
             </span>
             
-            {/* Category badges */}
+            {/* Category badges with tooltips */}
             {categories.map(cat => (
-              <span key={cat} className="badge-category px-2 py-0.5 rounded text-[10px] font-bold">
-                {cat}
-              </span>
+              <Tooltip key={cat} content={CATEGORY_LABELS[cat] || cat} position="top">
+                <span className="badge-category px-2 py-0.5 rounded text-[10px] font-bold inline-block">
+                  {cat}
+                </span>
+              </Tooltip>
             ))}
             
             {/* National adaptation indicator */}
             {has_national_note && (
-              <span className="flex items-center gap-0.5 text-[10px] text-amber-600 font-medium">
-                <Info size={10} />
-                National adaptation
-              </span>
+              <Tooltip content="This criterion may be adapted by national operators to reflect local regulations and conditions." position="top">
+                <span className="flex items-center gap-0.5 text-[10px] text-amber-600 font-semibold">
+                  <Info size={10} />
+                  National adaptation
+                </span>
+              </Tooltip>
             )}
           </div>
         </div>
