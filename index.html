@@ -5,9 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Green Key — Criteria & Explanatory Notes 2026–2031</title>
   <meta name="description" content="Green Key Criteria and Explanatory Notes for the certification period 1 October 2026 – 31 December 2031. The single source of truth for national operators and establishments." />
+  <meta name="theme-color" content="#0066CC" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="apple-touch-icon" href="/icon-192.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&display=swap" rel="stylesheet" />
+  <script>
+    // Apply dark mode before render to prevent flash
+    (function() {
+      var dm = localStorage.getItem('gk-dark-mode');
+      if (dm === 'true' || (!dm && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+      }
+    })();
+  </script>
 </head>
 <body>
   <div id="root"></div>

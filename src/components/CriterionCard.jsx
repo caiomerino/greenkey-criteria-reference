@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { ChevronDown, ChevronRight, Info } from 'lucide-react'
 import Tooltip from './Tooltip'
 
@@ -21,13 +21,6 @@ function highlightText(text, query) {
   )
 }
 
-/**
- * Detects whether a line is a list item based on:
- * - Ends with ; or ; and or ; or or ; and/or
- * - Starts with lowercase and follows a colon-ending line
- * - Starts with a bullet character
- * - Starts with a letter followed by ) like "a)"
- */
 function isListItem(line) {
   if (!line) return false
   const t = line.trim()
@@ -49,69 +42,118 @@ function startsWithLowercase(line) {
 }
 
 /**
- * Renders a line that may contain a "Label: description" pattern.
- * If found, bolds the label and italicises the rest after the colon.
- * Only applies when the colon appears early in the line (first 80 chars)
- * and isn't a list introducer (doesn't end with colon).
+ * Renders cross-reference links within text.
+ * Matches patterns like "criterion 1.2", "criteria 3.1, 4.1, 5.6, 7.12",
+ * "criterion 1.2 and criterion 1.3"
  */
-function renderHighlightedLine(text) {
+function renderWithCrossRefs(text, navigateToCriterion) {
+  if (!text || !navigateToCriterion) return text
+  
+  // Match "criterion X.Y" or "criteria X.Y" patterns
+  const regex = /\b(criter(?:ion|ia))\s+([\d]+\.[\d]+(?:(?:\s*(?:,|and|or|and\/or)\s*(?:(?:criterion|criteria)\s+)?[\d]+\.[\d]+)*))/gi
+  
+  const parts = []
+  let lastIndex = 0
+  let match
+  
+  while ((match = regex.exec(text)) !== null) {
+    // Add text before the match
+    if (match.index > lastIndex) {
+      parts.push(text.substring(lastIndex, match.index))
+    }
+    
+    // Parse all criterion numbers from the match
+    const fullMatch = match[0]
+    const numberRegex = /(\d+\.\d+)/g
+    const numbers = []
+    let numMatch
+    while ((numMatch = numberRegex.exec(fullMatch)) !== null) {
+      numbers.push(numMatch[1])
+    }
+    
+    // Build the rendered elements preserving the original text structure
+    // but making criterion numbers clickable
+    let rendered = fullMatch
+    const renderedParts = []
+    let renderedLastIdx = 0
+    const numRegex2 = /(\d+\.\d+)/g
+    let nm
+    while ((nm = numRegex2.exec(fullMatch)) !== null) {
+      if (nm.index > renderedLastIdx) {
+        renderedParts.push(fullMatch.substring(renderedLastIdx, nm.index))
+      }
+      const num = nm[1]
+      renderedParts.push(
+        <button
+          key={`ref-${match.index}-${nm.index}`}
+          onClick={(e) => { e.stopPropagation(); navigateToCriterion(num) }}
+          className="text-gk-blue hover:text-gk-blue-dark underline underline-offset-2 font-semibold cursor-pointer"
+          title={`Go to criterion ${num}`}
+        >
+          {num}
+        </button>
+      )
+      renderedLastIdx = nm.index + nm[0].length
+    }
+    if (renderedLastIdx < fullMatch.length) {
+      renderedParts.push(fullMatch.substring(renderedLastIdx))
+    }
+    
+    parts.push(<span key={`crossref-${match.index}`}>{renderedParts}</span>)
+    lastIndex = match.index + match[0].length
+  }
+  
+  if (lastIndex < text.length) {
+    parts.push(text.substring(lastIndex))
+  }
+  
+  return parts.length > 0 ? parts : text
+}
+
+function renderHighlightedLine(text, navigateToCriterion) {
   if (!text) return text
   
-  // Check for "Label: description" pattern — colon within first portion, not at end
   const colonIdx = text.indexOf(': ')
   if (colonIdx > 0 && colonIdx < 80 && !text.trim().endsWith(':')) {
     const label = text.substring(0, colonIdx)
     const rest = text.substring(colonIdx + 2)
     
-    // Only apply if the label looks like a heading/term (starts uppercase, short-ish)
     if (label.length < 80 && /^[A-Z]/.test(label.trim())) {
       return (
         <>
-          <strong className="text-gk-text">{label}:</strong>{' '}
-          <span className="italic text-gk-text/90">{rest}</span>
+          <strong className="text-gk-text dark:text-gk-dark-text">{renderWithCrossRefs(label, navigateToCriterion)}:</strong>{' '}
+          <span className="italic text-gk-text/90 dark:text-gk-dark-text/90">{renderWithCrossRefs(rest, navigateToCriterion)}</span>
         </>
       )
     }
   }
   
-  return text
+  return renderWithCrossRefs(text, navigateToCriterion)
 }
 
-/**
- * Parses explanatory notes into structured blocks with proper formatting.
- * 
- * Patterns handled:
- * 1. Section headings: "Relevance", "Expectations for implementation", "Audit evidence"
- * 2. National adaptation notes (ⓘ prefix)
- * 3. List-introducing lines (ending with ":")  → rendered in italic
- * 4. List items (ending with ";", "; and", "; or") → rendered as bullet points
- * 5. Continuation items (lowercase start after list) → rendered as bullet points
- * 6. "Label: description" patterns → bold label, italic description
- * 7. Regular paragraphs
- */
-function formatNotes(text) {
+function formatNotes(text, navigateToCriterion) {
   if (!text) return null
   
   const lines = text.split('\n').filter(p => p.trim())
   const elements = []
-  let inList = false // tracks whether we're inside a list context
-  let listItems = [] // accumulates list items
-  let listIntro = null // the introducing line for the current list
+  let inList = false
+  let listItems = []
+  let listIntro = null
   
   const flushList = () => {
     if (listItems.length > 0) {
       elements.push(
         <div key={`list-${elements.length}`} className="my-2">
           {listIntro && (
-            <p className="text-sm text-gk-text leading-relaxed mb-1.5 italic">
-              {listIntro}
+            <p className="text-sm text-gk-text dark:text-gk-dark-text leading-relaxed mb-1.5 italic">
+              {renderWithCrossRefs(listIntro, navigateToCriterion)}
             </p>
           )}
           <ul className="list-none space-y-1 ml-1">
             {listItems.map((item, j) => (
-              <li key={j} className="text-sm text-gk-text leading-relaxed flex gap-2">
+              <li key={j} className="text-sm text-gk-text dark:text-gk-dark-text leading-relaxed flex gap-2">
                 <span className="shrink-0 mt-[7px] w-1.5 h-1.5 rounded-full bg-gk-blue/40" />
-                <span>{cleanListItem(item)}</span>
+                <span>{renderWithCrossRefs(cleanListItem(item), navigateToCriterion)}</span>
               </li>
             ))}
           </ul>
@@ -126,7 +168,6 @@ function formatNotes(text) {
   for (let idx = 0; idx < lines.length; idx++) {
     const trimmed = lines[idx].trim()
     
-    // Section heading: Relevance
     if (/^Relevance$/i.test(trimmed)) {
       flushList()
       elements.push(
@@ -139,7 +180,6 @@ function formatNotes(text) {
       continue
     }
     
-    // Section heading: Expectations for implementation
     if (/^Expectations for implementation$/i.test(trimmed)) {
       flushList()
       elements.push(
@@ -152,12 +192,11 @@ function formatNotes(text) {
       continue
     }
 
-    // Section heading: Audit evidence
     if (/^Audit evidence$/i.test(trimmed)) {
       flushList()
       elements.push(
         <div key={idx} className="mt-5 first:mt-0 mb-2">
-          <h4 className="text-xs font-black uppercase tracking-wider text-slate-500 border-b border-slate-300/50 pb-1">
+          <h4 className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-300/50 dark:border-slate-600/50 pb-1">
             {trimmed}
           </h4>
         </div>
@@ -165,12 +204,11 @@ function formatNotes(text) {
       continue
     }
     
-    // National adaptation note
     if (/^ⓘ Note on national adaptation/.test(trimmed)) {
       flushList()
       elements.push(
-        <div key={idx} className="bg-amber-50 border border-amber-200 rounded-lg p-3 mt-4">
-          <h4 className="text-xs font-black uppercase tracking-wider mb-2 text-amber-700">
+        <div key={idx} className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/50 rounded-lg p-3 mt-4">
+          <h4 className="text-xs font-black uppercase tracking-wider mb-2 text-amber-700 dark:text-amber-400">
             <Info size={12} className="inline mr-1 -mt-0.5" />
             {trimmed}
           </h4>
@@ -179,34 +217,24 @@ function formatNotes(text) {
       continue
     }
 
-    // Check if this line introduces a list (ends with colon)
     if (isListIntroducer(trimmed)) {
-      flushList() // flush any previous list
-      
-      // Check if next lines are list items
+      flushList()
       const nextLine = idx + 1 < lines.length ? lines[idx + 1].trim() : ''
       if (isListItem(nextLine) || startsWithLowercase(nextLine)) {
-        // This is a list introducer — will be rendered as italic intro before bullets
         inList = true
         listIntro = trimmed
       } else {
-        // It's a colon-ending sentence but not followed by a list
-        // Render as italic paragraph
         elements.push(
-          <p key={idx} className="text-sm text-gk-text leading-relaxed mb-2 italic">
-            {trimmed}
+          <p key={idx} className="text-sm text-gk-text dark:text-gk-dark-text leading-relaxed mb-2 italic">
+            {renderWithCrossRefs(trimmed, navigateToCriterion)}
           </p>
         )
       }
       continue
     }
     
-    // List item detection
     if (inList && (isListItem(trimmed) || startsWithLowercase(trimmed))) {
       listItems.push(trimmed)
-      
-      // Check if this is the last item in the list
-      // (next line is not a list item and doesn't start with lowercase)
       const nextLine = idx + 1 < lines.length ? lines[idx + 1].trim() : ''
       if (!isListItem(nextLine) && !startsWithLowercase(nextLine)) {
         flushList()
@@ -214,8 +242,6 @@ function formatNotes(text) {
       continue
     }
     
-    // Standalone list item without a preceding colon introducer
-    // (semicolon-ending or lowercase-starting)
     if (!inList && isListItem(trimmed)) {
       inList = true
       listItems.push(trimmed)
@@ -226,54 +252,47 @@ function formatNotes(text) {
       continue
     }
     
-    // Regular paragraph — check for "Label: description" highlighting
     flushList()
     elements.push(
-      <p key={idx} className="text-sm text-gk-text leading-relaxed mb-2 last:mb-0">
-        {renderHighlightedLine(trimmed)}
+      <p key={idx} className="text-sm text-gk-text dark:text-gk-dark-text leading-relaxed mb-2 last:mb-0">
+        {renderHighlightedLine(trimmed, navigateToCriterion)}
       </p>
     )
   }
   
-  // Flush any remaining list
   flushList()
-  
   return elements
 }
 
-/**
- * Cleans a list item by removing leading bullet chars, semicolons, and
- * trailing "; and", "; or", "; and/or" from the end.
- */
 function cleanListItem(text) {
   let t = text.trim()
-  // Remove leading bullet chars
   t = t.replace(/^[-–—•]\s*/, '')
-  // Remove leading "a) " style markers
   t = t.replace(/^[a-z]\)\s*/, '')
-  // Clean trailing semicolon patterns but preserve the text
   t = t.replace(/;\s*(and|or|and\/or)\s*$/, '')
   t = t.replace(/;\s*$/, '')
-  // Capitalise first letter if it was lowercase
-  if (t.length > 0 && t[0] === t[0].toLowerCase() && t[0] !== t[0].toUpperCase()) {
-    // Don't capitalize if it looks like a continuation
-  }
   return t
 }
 
-export default function CriterionCard({ criterion, searchQuery }) {
+export default function CriterionCard({ criterion, searchQuery, autoExpand, navigateToCriterion }) {
   const [expanded, setExpanded] = useState(false)
+  
+  // Auto-expand when deep-linked
+  useEffect(() => {
+    if (autoExpand) setExpanded(true)
+  }, [autoExpand])
   
   const { number, statement, type, categories, has_national_note, explanatory_notes } = criterion
   
   return (
-    <div className="criterion-card bg-white rounded-xl border border-gk-border overflow-hidden">
-      {/* Header - always visible */}
+    <div className={`criterion-card bg-white dark:bg-gk-dark-surface rounded-xl border overflow-hidden ${
+      autoExpand
+        ? 'border-gk-blue ring-2 ring-gk-blue/30'
+        : 'border-gk-border dark:border-gk-dark-border'
+    }`}>
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full text-left p-4 sm:p-5 flex items-start gap-3 hover:bg-slate-50/50 transition-colors"
+        className="w-full text-left p-4 sm:p-5 flex items-start gap-3 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors"
       >
-        {/* Number badge */}
         <div className={`shrink-0 w-12 h-12 rounded-lg flex items-center justify-center text-white font-bold text-sm ${
           type === 'imperative' ? 'bg-gk-blue' : 'bg-gk-green-web'
         }`}>
@@ -281,21 +300,17 @@ export default function CriterionCard({ criterion, searchQuery }) {
         </div>
         
         <div className="flex-1 min-w-0">
-          {/* Criterion text */}
-          <p className="text-sm font-semibold text-gk-text leading-relaxed pr-4">
+          <p className="text-sm font-semibold text-gk-text dark:text-gk-dark-text leading-relaxed pr-4">
             {searchQuery ? highlightText(statement, searchQuery) : statement}
           </p>
           
-          {/* Badges row */}
           <div className="flex flex-wrap items-center gap-1.5 mt-2">
-            {/* Type badge */}
             <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide ${
               type === 'imperative' ? 'badge-imperative' : 'badge-guideline'
             }`}>
               {type === 'imperative' ? 'Imperative' : 'Guideline'}
             </span>
             
-            {/* Category badges with tooltips */}
             {categories.map(cat => (
               <Tooltip key={cat} content={CATEGORY_LABELS[cat] || cat} position="top">
                 <span className="badge-category px-2 py-0.5 rounded text-[10px] font-bold inline-block">
@@ -304,10 +319,9 @@ export default function CriterionCard({ criterion, searchQuery }) {
               </Tooltip>
             ))}
             
-            {/* National adaptation indicator */}
             {has_national_note && (
               <Tooltip content="This criterion may be adapted by national operators to reflect local regulations and conditions." position="top">
-                <span className="flex items-center gap-0.5 text-[10px] text-amber-600 font-semibold">
+                <span className="flex items-center gap-0.5 text-[10px] text-amber-600 dark:text-amber-400 font-semibold">
                   <Info size={10} />
                   National adaptation
                 </span>
@@ -316,20 +330,18 @@ export default function CriterionCard({ criterion, searchQuery }) {
           </div>
         </div>
         
-        {/* Expand indicator */}
         <div className="shrink-0 mt-1">
           {expanded
-            ? <ChevronDown size={18} className="text-gk-text-muted" />
-            : <ChevronRight size={18} className="text-gk-text-muted" />
+            ? <ChevronDown size={18} className="text-gk-text-muted dark:text-gk-dark-text-muted" />
+            : <ChevronRight size={18} className="text-gk-text-muted dark:text-gk-dark-text-muted" />
           }
         </div>
       </button>
       
-      {/* Expanded content */}
       {expanded && explanatory_notes && (
-        <div className="border-t border-gk-border bg-slate-50/50 px-4 sm:px-5 py-4 sm:py-5">
+        <div className="border-t border-gk-border dark:border-gk-dark-border bg-slate-50/50 dark:bg-slate-800/30 px-4 sm:px-5 py-4 sm:py-5">
           <div className="ml-0 sm:ml-15">
-            {formatNotes(explanatory_notes)}
+            {formatNotes(explanatory_notes, navigateToCriterion)}
           </div>
         </div>
       )}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import CriterionCard from '../components/CriterionCard'
 import {
   Shield, Users, Droplets, Zap, Trash2, ShoppingBag, TreePine, FileText,
@@ -35,10 +35,38 @@ const SECTION_SHORT_NAMES = {
   'LIVING ENVIRONMENT': 'Living Environment',
 }
 
-export default function CriteriaView({ sections, activeSection, activeSubsection, searchQuery, glossary, navigateTo, showAllCriteria }) {
-  // Track collapsed state for sections and subsections
+export default function CriteriaView({
+  sections, activeSection, activeSubsection, searchQuery, glossary,
+  navigateTo, showAllCriteria, expandAllSignal, highlightCriterion,
+  navigateToCriterion
+}) {
   const [collapsedSections, setCollapsedSections] = useState({})
   const [collapsedSubsections, setCollapsedSubsections] = useState({})
+  const highlightRef = useRef(null)
+
+  // Respond to expand/collapse all signal from parent
+  useEffect(() => {
+    if (expandAllSignal > 0) {
+      // Expand all
+      setCollapsedSections({})
+      setCollapsedSubsections({})
+    } else if (expandAllSignal < 0) {
+      // Collapse all sections
+      const collapsed = {}
+      sections.forEach(s => { collapsed[s.name] = true })
+      setCollapsedSections(collapsed)
+    }
+  }, [expandAllSignal, sections])
+
+  // Auto-scroll to highlighted criterion
+  useEffect(() => {
+    if (highlightCriterion && highlightRef.current) {
+      const timer = setTimeout(() => {
+        highlightRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }, 200)
+      return () => clearTimeout(timer)
+    }
+  }, [highlightCriterion])
 
   const toggleSection = (name) => {
     setCollapsedSections(prev => ({ ...prev, [name]: !prev[name] }))
@@ -49,27 +77,24 @@ export default function CriteriaView({ sections, activeSection, activeSubsection
     setCollapsedSubsections(prev => ({ ...prev, [key]: !prev[key] }))
   }
 
-  // Filter to show specific section/subsection
   const sectionsToShow = activeSection
     ? sections.filter(s => s.name === activeSection)
     : sections
 
-  // No results
   if (sectionsToShow.length === 0) {
     return (
       <div className="text-center py-16">
-        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gk-surface flex items-center justify-center">
-          <FileText size={24} className="text-gk-text-muted" />
+        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gk-surface dark:bg-gk-dark-surface flex items-center justify-center">
+          <FileText size={24} className="text-gk-text-muted dark:text-gk-dark-text-muted" />
         </div>
-        <h3 className="text-lg font-bold text-gk-text mb-2">No criteria found</h3>
-        <p className="text-sm text-gk-text-muted">
+        <h3 className="text-lg font-bold text-gk-text dark:text-gk-dark-text mb-2">No criteria found</h3>
+        <p className="text-sm text-gk-text-muted dark:text-gk-dark-text-muted">
           Try adjusting your search or filters to see results.
         </p>
       </div>
     )
   }
 
-  // Calculate total for "All Criteria" header
   const allTotal = sectionsToShow.reduce((acc, s) =>
     acc + s.subsections.reduce((a, ss) => a + ss.criteria.length, 0), 0)
   const allImperative = sectionsToShow.reduce((acc, s) =>
@@ -79,7 +104,6 @@ export default function CriteriaView({ sections, activeSection, activeSubsection
 
   return (
     <div className="space-y-6">
-      {/* All Criteria header when in that mode */}
       {showAllCriteria && !activeSection && (
         <div className="bg-gradient-to-br from-gk-blue to-gk-blue-dark rounded-2xl p-6 sm:p-8 text-white">
           <h2 className="text-2xl font-black mb-2">All Criteria</h2>
@@ -118,7 +142,6 @@ export default function CriteriaView({ sections, activeSection, activeSubsection
 
         return (
           <div key={section.name}>
-            {/* Collapsible section header */}
             <button
               onClick={() => toggleSection(section.name)}
               className={`w-full text-left bg-gradient-to-r ${gradient} rounded-2xl p-5 sm:p-6 mb-4 text-white transition-all hover:shadow-lg group`}
@@ -153,7 +176,6 @@ export default function CriteriaView({ sections, activeSection, activeSubsection
               </div>
             </button>
 
-            {/* Section content — collapsible */}
             {!isSectionCollapsed && (
               <div className="space-y-6 mb-8">
                 {subsectionsToShow.map(subsection => {
@@ -162,32 +184,36 @@ export default function CriteriaView({ sections, activeSection, activeSubsection
 
                   return (
                     <div key={subsection.name}>
-                      {/* Collapsible subsection header */}
                       <button
                         onClick={() => toggleSubsection(section.name, subsection.name)}
-                        className="w-full text-left flex items-center gap-2 mb-3 pb-2 border-b-2 border-gk-border hover:border-gk-blue/40 transition-colors group"
+                        className="w-full text-left flex items-center gap-2 mb-3 pb-2 border-b-2 border-gk-border dark:border-gk-dark-border hover:border-gk-blue/40 transition-colors group"
                       >
-                        <div className="shrink-0 w-6 h-6 rounded flex items-center justify-center text-gk-text-muted group-hover:text-gk-blue transition-colors">
+                        <div className="shrink-0 w-6 h-6 rounded flex items-center justify-center text-gk-text-muted dark:text-gk-dark-text-muted group-hover:text-gk-blue transition-colors">
                           {isSubCollapsed
                             ? <ChevronRight size={16} />
                             : <ChevronDown size={16} />
                           }
                         </div>
-                        <h3 className="text-base font-black text-gk-text flex-1">{subsection.name}</h3>
-                        <span className="text-xs text-gk-text-muted bg-gk-surface rounded-full px-2.5 py-0.5 font-semibold shrink-0">
+                        <h3 className="text-base font-black text-gk-text dark:text-gk-dark-text flex-1">{subsection.name}</h3>
+                        <span className="text-xs text-gk-text-muted dark:text-gk-dark-text-muted bg-gk-surface dark:bg-gk-dark-bg rounded-full px-2.5 py-0.5 font-semibold shrink-0">
                           {subsection.criteria.length} {subsection.criteria.length === 1 ? 'criterion' : 'criteria'}
                         </span>
                       </button>
 
-                      {/* Subsection criteria — collapsible */}
                       {!isSubCollapsed && (
                         <div className="space-y-3 ml-0 sm:ml-2">
                           {subsection.criteria.map(criterion => (
-                            <CriterionCard
+                            <div
                               key={criterion.number}
-                              criterion={criterion}
-                              searchQuery={searchQuery}
-                            />
+                              ref={highlightCriterion === criterion.number ? highlightRef : null}
+                            >
+                              <CriterionCard
+                                criterion={criterion}
+                                searchQuery={searchQuery}
+                                autoExpand={highlightCriterion === criterion.number}
+                                navigateToCriterion={navigateToCriterion}
+                              />
+                            </div>
                           ))}
                         </div>
                       )}
@@ -200,7 +226,6 @@ export default function CriteriaView({ sections, activeSection, activeSubsection
         )
       })}
 
-      {/* Show all sections navigation when viewing a specific section */}
       {activeSection && !showAllCriteria && (
         <div className="text-center pt-4">
           <button

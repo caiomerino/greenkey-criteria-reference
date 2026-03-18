@@ -45,7 +45,7 @@ export default function Sidebar({ data, activeView, activeSection, activeSubsect
     <aside
       className={`
         fixed lg:static inset-y-0 left-0 z-50
-        w-72 bg-white border-r border-gk-border
+        w-72 bg-white dark:bg-gk-dark-surface border-r border-gk-border dark:border-gk-dark-border
         flex flex-col
         transform transition-transform duration-300 ease-in-out
         ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
@@ -53,9 +53,9 @@ export default function Sidebar({ data, activeView, activeSection, activeSubsect
       `}
     >
       {/* Mobile close */}
-      <div className="lg:hidden flex items-center justify-between p-4 border-b border-gk-border">
-        <span className="font-bold text-gk-text text-sm">Navigation</span>
-        <button onClick={onClose} className="p-1 rounded hover:bg-gk-surface">
+      <div className="lg:hidden flex items-center justify-between p-4 border-b border-gk-border dark:border-gk-dark-border">
+        <span className="font-bold text-gk-text dark:text-gk-dark-text text-sm">Navigation</span>
+        <button onClick={onClose} className="p-1 rounded hover:bg-gk-surface dark:hover:bg-gk-dark-bg">
           <X size={18} />
         </button>
       </div>
@@ -96,11 +96,11 @@ export default function Sidebar({ data, activeView, activeSection, activeSubsect
         </div>
 
         {/* Divider */}
-        <div className="mx-3 my-3 border-t border-gk-border" />
+        <div className="mx-3 my-3 border-t border-gk-border dark:border-gk-dark-border" />
 
         {/* Criteria sections label */}
         <div className="px-3 mb-2">
-          <span className="text-[10px] font-bold text-gk-text-muted uppercase tracking-wider">
+          <span className="text-[10px] font-bold text-gk-text-muted dark:text-gk-dark-text-muted uppercase tracking-wider">
             Criteria Sections
           </span>
         </div>
@@ -114,7 +114,7 @@ export default function Sidebar({ data, activeView, activeSection, activeSubsect
         >
           <List size={15} className="shrink-0 text-gk-blue" />
           <span className="flex-1">All Criteria</span>
-          <span className="text-[10px] text-gk-text-muted font-bold bg-gk-surface rounded-full px-2 py-0.5">
+          <span className="text-[10px] text-gk-text-muted dark:text-gk-dark-text-muted font-bold bg-gk-surface dark:bg-gk-dark-bg rounded-full px-2 py-0.5">
             {totalCriteria}
           </span>
         </button>
@@ -140,18 +140,18 @@ export default function Sidebar({ data, activeView, activeSection, activeSubsect
               >
                 <Icon size={15} className="shrink-0 text-gk-green" />
                 <span className="flex-1 truncate">{shortName}</span>
-                <span className="text-[10px] text-gk-text-muted font-bold bg-gk-surface rounded-full px-2 py-0.5">
+                <span className="text-[10px] text-gk-text-muted dark:text-gk-dark-text-muted font-bold bg-gk-surface dark:bg-gk-dark-bg rounded-full px-2 py-0.5">
                   {count}
                 </span>
                 {isExpanded
-                  ? <ChevronDown size={14} className="shrink-0 text-gk-text-muted" />
-                  : <ChevronRight size={14} className="shrink-0 text-gk-text-muted" />
+                  ? <ChevronDown size={14} className="shrink-0 text-gk-text-muted dark:text-gk-dark-text-muted" />
+                  : <ChevronRight size={14} className="shrink-0 text-gk-text-muted dark:text-gk-dark-text-muted" />
                 }
               </button>
 
               {/* Subsections */}
               {isExpanded && (
-                <div className="ml-6 pl-3 border-l-2 border-gk-border">
+                <div className="ml-6 pl-3 border-l-2 border-gk-border dark:border-gk-dark-border">
                   {section.subsections.map(sub => {
                     const subCount = filteredSections
                       ?.find(s => s.name === section.name)
@@ -170,7 +170,7 @@ export default function Sidebar({ data, activeView, activeSection, activeSubsect
                         }`}
                       >
                         <span className="flex-1 truncate">{sub.name}</span>
-                        <span className="text-[10px] text-gk-text-muted">{subCount}</span>
+                        <span className="text-[10px] text-gk-text-muted dark:text-gk-dark-text-muted">{subCount}</span>
                       </button>
                     )
                   })}
@@ -181,7 +181,7 @@ export default function Sidebar({ data, activeView, activeSection, activeSubsect
         })}
 
         {/* Divider */}
-        <div className="mx-3 my-3 border-t border-gk-border" />
+        <div className="mx-3 my-3 border-t border-gk-border dark:border-gk-dark-border" />
 
         {/* Glossary */}
         <button
@@ -192,15 +192,15 @@ export default function Sidebar({ data, activeView, activeSection, activeSubsect
         >
           <BookOpen size={16} className="shrink-0" />
           <span>Glossary</span>
-          <span className="text-[10px] text-gk-text-muted font-bold bg-gk-surface rounded-full px-2 py-0.5 ml-auto">
+          <span className="text-[10px] text-gk-text-muted dark:text-gk-dark-text-muted font-bold bg-gk-surface dark:bg-gk-dark-bg rounded-full px-2 py-0.5 ml-auto">
             {data.glossary.length}
           </span>
         </button>
       </nav>
 
       {/* Bottom info */}
-      <div className="p-3 border-t border-gk-border bg-gk-surface">
-        <p className="text-[10px] text-gk-text-muted text-center leading-relaxed">
+      <div className="p-3 border-t border-gk-border dark:border-gk-dark-border bg-gk-surface dark:bg-gk-dark-bg">
+        <p className="text-[10px] text-gk-text-muted dark:text-gk-dark-text-muted text-center leading-relaxed">
           <strong>139</strong> Criteria · <strong>7</strong> Sections · <strong>6</strong> Categories
           <br />
           Valid: 1 Oct 2026 – 31 Dec 2031

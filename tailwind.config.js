@@ -1,6 +1,7 @@
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ["./index.html", "./src/**/*.{js,jsx}"],
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
@@ -16,6 +17,12 @@ export default {
         'gk-border': '#E2E8F0',
         'gk-text': '#1E293B',
         'gk-text-muted': '#64748B',
+        // Dark mode equivalents
+        'gk-dark-bg': '#0F172A',
+        'gk-dark-surface': '#1E293B',
+        'gk-dark-border': '#334155',
+        'gk-dark-text': '#E2E8F0',
+        'gk-dark-text-muted': '#94A3B8',
       },
       fontFamily: {
         'lato': ['Lato', 'Arial', 'sans-serif'],

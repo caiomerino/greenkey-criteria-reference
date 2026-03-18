@@ -77,18 +77,18 @@ export default function ScopeView({ data }) {
         const isCollapsed = collapsedSections[section.heading]
         
         return (
-          <div key={i} className="bg-white rounded-xl border border-gk-border overflow-hidden">
+          <div key={i} className="bg-white dark:bg-gk-dark-surface rounded-xl border border-gk-border dark:border-gk-dark-border overflow-hidden">
             {/* Collapsible header */}
             <button
               onClick={() => toggleSection(section.heading)}
-              className={`w-full text-left px-6 py-4 border-b border-gk-border flex items-center gap-2 transition-colors hover:opacity-90 ${
-                isIncluded ? 'bg-green-50' : isExcluded ? 'bg-red-50' : 'bg-gk-surface'
+              className={`w-full text-left px-6 py-4 border-b border-gk-border dark:border-gk-dark-border flex items-center gap-2 transition-colors hover:opacity-90 ${
+                isIncluded ? 'bg-green-50 dark:bg-green-900/20' : isExcluded ? 'bg-red-50 dark:bg-red-900/20' : 'bg-gk-surface dark:bg-gk-dark-bg'
               }`}
             >
-              {isIncluded && <CheckCircle2 size={18} className="text-green-600 shrink-0" />}
-              {isExcluded && <XCircle size={18} className="text-red-500 shrink-0" />}
-              <h2 className="text-base font-black text-gk-text flex-1">{section.heading}</h2>
-              <div className="shrink-0 text-gk-text-muted">
+              {isIncluded && <CheckCircle2 size={18} className="text-green-600 dark:text-green-400 shrink-0" />}
+              {isExcluded && <XCircle size={18} className="text-red-500 dark:text-red-400 shrink-0" />}
+              <h2 className="text-base font-black text-gk-text dark:text-gk-dark-text flex-1">{section.heading}</h2>
+              <div className="shrink-0 text-gk-text-muted dark:text-gk-dark-text-muted">
                 {isCollapsed
                   ? <ChevronRight size={18} />
                   : <ChevronDown size={18} />
@@ -98,7 +98,7 @@ export default function ScopeView({ data }) {
             
             {/* Collapsible content */}
             {!isCollapsed && (
-              <div className="p-6">
+              <div className="p-6 dark:text-gk-dark-text">
                 {section.content.map((para, j) => renderScopeParagraph(para, j))}
               </div>
             )}

@@ -36,10 +36,10 @@ export default function CategoriesView({ data }) {
       </div>
 
       {/* Introduction text */}
-      <div className="bg-white rounded-xl border border-gk-border p-6">
+      <div className="bg-white dark:bg-gk-dark-surface rounded-xl border border-gk-border dark:border-gk-dark-border p-6">
         <div className="space-y-2">
           {introduction.map((para, i) => (
-            <p key={i} className="text-sm text-gk-text leading-relaxed">{para}</p>
+            <p key={i} className="text-sm text-gk-text dark:text-gk-dark-text leading-relaxed">{para}</p>
           ))}
         </div>
       </div>
@@ -54,14 +54,14 @@ export default function CategoriesView({ data }) {
           const abbrev = cat.code.match(/\(([^)]+)\)/)?.[1] || ''
           
           return (
-            <div key={i} className={`rounded-xl border-2 overflow-hidden ${colorClass}`}>
+            <div key={i} className={`rounded-xl border-2 overflow-hidden ${colorClass} dark:bg-gk-dark-surface dark:border-gk-dark-border`}>
               <div className="p-6">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center shadow-sm">
-                    <Icon size={20} className="text-gk-blue" />
+                  <div className="w-10 h-10 rounded-lg bg-white dark:bg-gk-dark-bg flex items-center justify-center shadow-sm">
+                    <Icon size={20} className="text-gk-blue dark:text-blue-400" />
                   </div>
                   <div>
-                    <h2 className="text-lg font-black text-gk-text">{cat.code}</h2>
+                    <h2 className="text-lg font-black text-gk-text dark:text-gk-dark-text">{cat.code}</h2>
                   </div>
                   {abbrev && (
                     <span className="ml-auto px-3 py-1 rounded-full text-xs font-bold bg-gk-blue text-white">
@@ -69,9 +69,9 @@ export default function CategoriesView({ data }) {
                     </span>
                   )}
                 </div>
-                <div className="bg-white rounded-lg p-4 border border-white/50">
+                <div className="bg-white dark:bg-gk-dark-bg/50 rounded-lg p-4 border border-white/50 dark:border-gk-dark-border">
                   {cat.definition.split('\n').map((para, j) => (
-                    <p key={j} className="text-sm text-gk-text leading-relaxed mb-2 last:mb-0">
+                    <p key={j} className="text-sm text-gk-text dark:text-gk-dark-text leading-relaxed mb-2 last:mb-0">
                       {para}
                     </p>
                   ))}

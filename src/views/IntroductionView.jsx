@@ -58,66 +58,66 @@ export default function IntroductionView({ data, navigateTo }) {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <button
           onClick={() => navigateTo('categories')}
-          className="flex items-center gap-3 bg-white border border-gk-border rounded-xl p-4 hover:border-gk-blue hover:shadow-sm transition-all text-left"
+          className="flex items-center gap-3 bg-white dark:bg-gk-dark-surface border border-gk-border dark:border-gk-dark-border rounded-xl p-4 hover:border-gk-blue hover:shadow-sm transition-all text-left"
         >
-          <div className="w-10 h-10 rounded-lg bg-gk-blue-light flex items-center justify-center">
-            <Layers size={18} className="text-gk-blue" />
+          <div className="w-10 h-10 rounded-lg bg-gk-blue-light dark:bg-gk-blue/20 flex items-center justify-center">
+            <Layers size={18} className="text-gk-blue dark:text-blue-400" />
           </div>
           <div className="flex-1">
-            <span className="text-sm font-bold text-gk-text">Category Definitions</span>
-            <p className="text-xs text-gk-text-muted">6 establishment categories</p>
+            <span className="text-sm font-bold text-gk-text dark:text-gk-dark-text">Category Definitions</span>
+            <p className="text-xs text-gk-text-muted dark:text-gk-dark-text-muted">6 establishment categories</p>
           </div>
-          <ArrowRight size={16} className="text-gk-text-muted" />
+          <ArrowRight size={16} className="text-gk-text-muted dark:text-gk-dark-text-muted" />
         </button>
 
         <button
           onClick={() => navigateTo('scope')}
-          className="flex items-center gap-3 bg-white border border-gk-border rounded-xl p-4 hover:border-gk-blue hover:shadow-sm transition-all text-left"
+          className="flex items-center gap-3 bg-white dark:bg-gk-dark-surface border border-gk-border dark:border-gk-dark-border rounded-xl p-4 hover:border-gk-blue hover:shadow-sm transition-all text-left"
         >
-          <div className="w-10 h-10 rounded-lg bg-gk-green-light flex items-center justify-center">
-            <Target size={18} className="text-gk-green" />
+          <div className="w-10 h-10 rounded-lg bg-gk-green-light dark:bg-gk-green/20 flex items-center justify-center">
+            <Target size={18} className="text-gk-green dark:text-green-400" />
           </div>
           <div className="flex-1">
-            <span className="text-sm font-bold text-gk-text">Scope</span>
-            <p className="text-xs text-gk-text-muted">Included & excluded services</p>
+            <span className="text-sm font-bold text-gk-text dark:text-gk-dark-text">Scope</span>
+            <p className="text-xs text-gk-text-muted dark:text-gk-dark-text-muted">Included & excluded services</p>
           </div>
-          <ArrowRight size={16} className="text-gk-text-muted" />
+          <ArrowRight size={16} className="text-gk-text-muted dark:text-gk-dark-text-muted" />
         </button>
 
         <button
           onClick={() => navigateTo('glossary')}
-          className="flex items-center gap-3 bg-white border border-gk-border rounded-xl p-4 hover:border-gk-blue hover:shadow-sm transition-all text-left"
+          className="flex items-center gap-3 bg-white dark:bg-gk-dark-surface border border-gk-border dark:border-gk-dark-border rounded-xl p-4 hover:border-gk-blue hover:shadow-sm transition-all text-left"
         >
-          <div className="w-10 h-10 rounded-lg bg-gk-blue-light flex items-center justify-center">
-            <BookOpen size={18} className="text-gk-blue" />
+          <div className="w-10 h-10 rounded-lg bg-gk-blue-light dark:bg-gk-blue/20 flex items-center justify-center">
+            <BookOpen size={18} className="text-gk-blue dark:text-blue-400" />
           </div>
           <div className="flex-1">
-            <span className="text-sm font-bold text-gk-text">Glossary</span>
-            <p className="text-xs text-gk-text-muted">{data.glossary.length} defined terms</p>
+            <span className="text-sm font-bold text-gk-text dark:text-gk-dark-text">Glossary</span>
+            <p className="text-xs text-gk-text-muted dark:text-gk-dark-text-muted">{data.glossary.length} defined terms</p>
           </div>
-          <ArrowRight size={16} className="text-gk-text-muted" />
+          <ArrowRight size={16} className="text-gk-text-muted dark:text-gk-dark-text-muted" />
         </button>
 
         <button
           onClick={() => navigateTo('criteria', null, null)}
-          className="flex items-center gap-3 bg-white border border-gk-border rounded-xl p-4 hover:border-gk-blue hover:shadow-sm transition-all text-left"
+          className="flex items-center gap-3 bg-white dark:bg-gk-dark-surface border border-gk-border dark:border-gk-dark-border rounded-xl p-4 hover:border-gk-blue hover:shadow-sm transition-all text-left"
         >
-          <div className="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center">
-            <List size={18} className="text-amber-600" />
+          <div className="w-10 h-10 rounded-lg bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center">
+            <List size={18} className="text-amber-600 dark:text-amber-400" />
           </div>
           <div className="flex-1">
-            <span className="text-sm font-bold text-gk-text">All 139 Criteria</span>
-            <p className="text-xs text-gk-text-muted">79 Imperative · 60 Guideline</p>
+            <span className="text-sm font-bold text-gk-text dark:text-gk-dark-text">All 139 Criteria</span>
+            <p className="text-xs text-gk-text-muted dark:text-gk-dark-text-muted">79 Imperative · 60 Guideline</p>
           </div>
-          <ArrowRight size={16} className="text-gk-text-muted" />
+          <ArrowRight size={16} className="text-gk-text-muted dark:text-gk-dark-text-muted" />
         </button>
       </div>
 
       {/* Applicable categories */}
-      <div className="bg-white rounded-xl border border-gk-border p-6">
-        <h2 className="text-lg font-black text-gk-text mb-1">Applicable Establishment Categories</h2>
-        <p className="text-sm text-gk-text-muted mb-4">
-          Green Key is applicable to the following specific types of establishments. <em className="text-gk-text-muted">Hover over each code for a summary.</em>
+      <div className="bg-white dark:bg-gk-dark-surface rounded-xl border border-gk-border dark:border-gk-dark-border p-6">
+        <h2 className="text-lg font-black text-gk-text dark:text-gk-dark-text mb-1">Applicable Establishment Categories</h2>
+        <p className="text-sm text-gk-text-muted dark:text-gk-dark-text-muted mb-4">
+          Green Key is applicable to the following specific types of establishments. <em className="text-gk-text-muted dark:text-gk-dark-text-muted">Hover over each code for a summary.</em>
         </p>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {[
@@ -129,11 +129,11 @@ export default function IntroductionView({ data, navigateTo }) {
             { code: 'A', name: 'Attractions' },
           ].map(cat => (
             <Tooltip key={cat.code} content={CATEGORY_TOOLTIPS[cat.code]} position="top">
-              <div className="bg-gk-surface rounded-lg p-3 border border-gk-border block w-full">
+              <div className="bg-gk-surface dark:bg-gk-dark-bg rounded-lg p-3 border border-gk-border dark:border-gk-dark-border block w-full">
                 <span className="inline-block px-2 py-0.5 rounded text-xs font-bold bg-gk-blue text-white mb-1">
                   {cat.code}
                 </span>
-                <p className="text-sm font-semibold text-gk-text">{cat.name}</p>
+                <p className="text-sm font-semibold text-gk-text dark:text-gk-dark-text">{cat.name}</p>
               </div>
             </Tooltip>
           ))}
@@ -141,9 +141,9 @@ export default function IntroductionView({ data, navigateTo }) {
       </div>
 
       {/* Imperative and Guideline criteria table */}
-      <div className="bg-white rounded-xl border border-gk-border p-6">
-        <h2 className="text-lg font-black text-gk-text mb-1">Imperative and Guideline Criteria</h2>
-        <p className="text-sm text-gk-text-muted mb-4">
+      <div className="bg-white dark:bg-gk-dark-surface rounded-xl border border-gk-border dark:border-gk-dark-border p-6">
+        <h2 className="text-lg font-black text-gk-text dark:text-gk-dark-text mb-1">Imperative and Guideline Criteria</h2>
+        <p className="text-sm text-gk-text-muted dark:text-gk-dark-text-muted mb-4">
           Criteria marked with <strong className="text-gk-blue">(I)</strong> are <strong>imperative</strong> criteria, while criteria marked with <strong className="text-gk-green-web">(G)</strong> are <strong>guideline</strong> criteria. The applicant must conform with all imperative criteria and an increasing number of
           applicable guideline criteria according to the number of years for which the certificate has
           been held, as per the following table:
@@ -161,9 +161,9 @@ export default function IntroductionView({ data, navigateTo }) {
             </thead>
             <tbody>
               {certTable.slice(1).map((row, i) => (
-                <tr key={i} className={`border-b border-gk-border ${i % 2 === 0 ? 'bg-white' : 'bg-gk-surface'}`}>
+                <tr key={i} className={`border-b border-gk-border dark:border-gk-dark-border ${i % 2 === 0 ? 'bg-white dark:bg-gk-dark-surface' : 'bg-gk-surface dark:bg-gk-dark-bg'}`}>
                   {row.map((cell, j) => (
-                    <td key={j} className={`px-4 py-3 text-sm ${j === 0 ? 'font-semibold text-gk-text' : 'text-gk-text'}`}>
+                    <td key={j} className={`px-4 py-3 text-sm ${j === 0 ? 'font-semibold text-gk-text dark:text-gk-dark-text' : 'text-gk-text dark:text-gk-dark-text'}`}>
                       {cell}
                     </td>
                   ))}
@@ -176,7 +176,7 @@ export default function IntroductionView({ data, navigateTo }) {
 
       {/* Criteria sections overview */}
       <div>
-        <h2 className="text-lg font-black text-gk-text mb-4">Criteria Sections</h2>
+        <h2 className="text-lg font-black text-gk-text dark:text-gk-dark-text mb-4">Criteria Sections</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {SECTION_CARDS.map(card => {
             const Icon = card.icon
@@ -184,7 +184,7 @@ export default function IntroductionView({ data, navigateTo }) {
               <button
                 key={card.section}
                 onClick={() => navigateTo('criteria', card.section)}
-                className={`flex items-center gap-3 border rounded-xl p-4 hover:shadow-sm transition-all text-left ${card.color}`}
+                className={`flex items-center gap-3 border rounded-xl p-4 hover:shadow-sm transition-all text-left ${card.color} dark:bg-gk-dark-surface dark:border-gk-dark-border`}
               >
                 <div className="w-10 h-10 rounded-lg bg-white/80 flex items-center justify-center">
                   <Icon size={18} />

@@ -51,7 +51,7 @@ export default function ShareButton() {
     <div className="relative">
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-gk-blue bg-gk-blue-light hover:bg-blue-100 rounded-lg transition-colors"
+        className="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-gk-blue dark:text-blue-400 bg-gk-blue-light dark:bg-gk-blue/20 hover:bg-blue-100 dark:hover:bg-gk-blue/30 rounded-lg transition-colors"
         aria-label="Share"
       >
         <Share2 size={15} />
@@ -61,29 +61,29 @@ export default function ShareButton() {
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-full mt-2 bg-white rounded-xl shadow-lg border border-gk-border py-2 w-56 z-50">
+          <div className="absolute right-0 top-full mt-2 bg-white dark:bg-gk-dark-surface rounded-xl shadow-lg border border-gk-border dark:border-gk-dark-border py-2 w-56 z-50">
             <button
               onClick={handleCopyLink}
-              className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gk-text hover:bg-gk-surface transition-colors"
+              className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gk-text dark:text-gk-dark-text hover:bg-gk-surface dark:hover:bg-gk-dark-bg transition-colors"
             >
-              {copied ? <Check size={16} className="text-gk-green" /> : <Link2 size={16} className="text-gk-text-muted" />}
+              {copied ? <Check size={16} className="text-gk-green" /> : <Link2 size={16} className="text-gk-text-muted dark:text-gk-dark-text-muted" />}
               <span>{copied ? 'Link copied' : 'Copy link'}</span>
             </button>
 
             <button
               onClick={handleEmailShare}
-              className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gk-text hover:bg-gk-surface transition-colors"
+              className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gk-text dark:text-gk-dark-text hover:bg-gk-surface dark:hover:bg-gk-dark-bg transition-colors"
             >
-              <Mail size={16} className="text-gk-text-muted" />
+              <Mail size={16} className="text-gk-text-muted dark:text-gk-dark-text-muted" />
               <span>Share via email</span>
             </button>
 
             {typeof navigator !== 'undefined' && navigator.share && (
               <button
                 onClick={handleNativeShare}
-                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gk-text hover:bg-gk-surface transition-colors"
+                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gk-text dark:text-gk-dark-text hover:bg-gk-surface dark:hover:bg-gk-dark-bg transition-colors"
               >
-                <MessageCircle size={16} className="text-gk-text-muted" />
+                <MessageCircle size={16} className="text-gk-text-muted dark:text-gk-dark-text-muted" />
                 <span>More sharing options</span>
               </button>
             )}

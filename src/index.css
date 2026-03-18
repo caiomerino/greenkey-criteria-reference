@@ -20,6 +20,13 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Dark mode body */
+.dark body,
+html.dark body {
+  color: #E2E8F0;
+  background-color: #0F172A;
+}
+
 /* Scrollbar styling */
 ::-webkit-scrollbar {
   width: 6px;
@@ -33,6 +40,14 @@ body {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #94A3B8;
+}
+
+/* Dark scrollbar */
+.dark ::-webkit-scrollbar-thumb {
+  background: #475569;
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #64748B;
 }
 
 /* Google Translate widget styling override */
@@ -56,6 +71,15 @@ body {
   color: #1E293B !important;
 }
 
+/* Dark mode Google Translate */
+.dark .goog-te-gadget-simple {
+  border-color: #334155 !important;
+  background: #1E293B !important;
+}
+.dark .goog-te-gadget-simple span {
+  color: #E2E8F0 !important;
+}
+
 /* ============================================
    TOOLTIP
    ============================================ */
@@ -73,6 +97,12 @@ body {
   pointer-events: none;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   animation: tooltip-in 0.15s ease-out;
+}
+
+.dark .tooltip-bubble {
+  background: #E2E8F0;
+  color: #0F172A;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
 @keyframes tooltip-in {
@@ -118,6 +148,18 @@ body {
   border-color: #0066CC;
 }
 
+/* Dark mode badges */
+.dark .badge-category {
+  background-color: #1E293B;
+  color: #94A3B8;
+  border-color: #334155;
+}
+.dark .badge-category.active {
+  background-color: rgba(0, 102, 204, 0.15);
+  color: #60A5FA;
+  border-color: #60A5FA;
+}
+
 /* ============================================
    SIDEBAR NAV
    ============================================ */
@@ -134,6 +176,16 @@ body {
   border-left: 3px solid #0066CC;
 }
 
+/* Dark mode nav items */
+.dark .nav-item:hover {
+  background-color: #334155;
+}
+.dark .nav-item.active {
+  background-color: rgba(0, 102, 204, 0.15);
+  color: #60A5FA;
+  border-left-color: #60A5FA;
+}
+
 /* ============================================
    SEARCH HIGHLIGHT
    ============================================ */
@@ -141,6 +193,11 @@ mark {
   background-color: #FEF3C7;
   border-radius: 2px;
   padding: 0 2px;
+}
+
+.dark mark {
+  background-color: #854D0E;
+  color: #FEF3C7;
 }
 
 /* ============================================
@@ -169,6 +226,11 @@ mark {
   }
   .print-break {
     page-break-before: always;
+  }
+  /* Force light mode for print */
+  body, html {
+    color: #1E293B !important;
+    background: white !important;
   }
 }
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { BookOpen, ChevronDown, ChevronRight } from 'lucide-react'
 
 function highlightText(text, query) {
@@ -147,8 +147,20 @@ function formatDefinition(text, searchQuery) {
   return elements
 }
 
-export default function GlossaryView({ terms, searchQuery }) {
+export default function GlossaryView({ terms, searchQuery, highlightTerm }) {
   const [expandedTerms, setExpandedTerms] = useState({})
+  const highlightRef = useRef(null)
+
+  // Auto-expand and scroll to highlighted term (from deep-link)
+  useEffect(() => {
+    if (highlightTerm) {
+      setExpandedTerms(prev => ({ ...prev, [highlightTerm]: true }))
+      const timer = setTimeout(() => {
+        highlightRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }, 200)
+      return () => clearTimeout(timer)
+    }
+  }, [highlightTerm])
 
   const toggleTerm = (term) => {
     setExpandedTerms(prev => ({ ...prev, [term]: !prev[term] }))
@@ -167,7 +179,7 @@ export default function GlossaryView({ terms, searchQuery }) {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-br from-gk-blue to-gk-blue-dark rounded-2xl p-8 text-white">
+      <div className="bg-gradient-to-br from-gk-blue to-gk-blue-dark rounded-2xl p-6 sm:p-8 text-white">
         <div className="flex items-center gap-3 mb-3">
           <BookOpen size={28} />
           <h1 className="text-2xl font-black">Glossary</h1>
@@ -178,7 +190,7 @@ export default function GlossaryView({ terms, searchQuery }) {
       </div>
 
       {/* Letter jump nav */}
-      <div className="bg-white rounded-xl border border-gk-border p-4 no-print">
+      <div className="bg-white dark:bg-gk-dark-surface rounded-xl border border-gk-border dark:border-gk-dark-border p-4 no-print">
         <div className="flex flex-wrap gap-1">
           {letters.map(letter => (
             <a
@@ -199,7 +211,7 @@ export default function GlossaryView({ terms, searchQuery }) {
       {/* Terms by letter */}
       {letters.map(letter => (
         <div key={letter} id={`glossary-${letter}`}>
-          <div className="sticky top-0 bg-gk-surface z-10 py-2">
+          <div className="sticky top-0 bg-gk-surface dark:bg-gk-dark-bg z-10 py-2">
             <span className="inline-flex w-10 h-10 rounded-lg bg-gk-blue text-white font-black text-lg items-center justify-center">
               {letter}
             </span>
@@ -210,14 +222,19 @@ export default function GlossaryView({ terms, searchQuery }) {
               return (
                 <div
                   key={i}
-                  className="bg-white rounded-xl border border-gk-border overflow-hidden"
+                  ref={highlightTerm === term.term ? highlightRef : null}
+                  className={`bg-white dark:bg-gk-dark-surface rounded-xl border overflow-hidden ${
+                    highlightTerm === term.term
+                      ? 'border-gk-blue ring-2 ring-gk-blue/30'
+                      : 'border-gk-border dark:border-gk-dark-border'
+                  }`}
                 >
                   <button
                     onClick={() => toggleTerm(term.term)}
-                    className="w-full text-left p-4 flex items-center gap-3 hover:bg-slate-50/50 transition-colors"
+                    className="w-full text-left p-4 flex items-center gap-3 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors"
                   >
                     <div className="flex-1">
-                      <h3 className="text-sm font-bold text-gk-text">
+                      <h3 className="text-sm font-bold text-gk-text dark:text-gk-dark-text">
                         {searchQuery ? highlightText(term.term, searchQuery) : term.term}
                       </h3>
                       {!isExpanded && (
@@ -232,7 +249,7 @@ export default function GlossaryView({ terms, searchQuery }) {
                     }
                   </button>
                   {isExpanded && (
-                    <div className="border-t border-gk-border bg-slate-50/50 p-4">
+                    <div className="border-t border-gk-border dark:border-gk-dark-border bg-slate-50/50 dark:bg-slate-800/30 p-4">
                       {formatDefinition(term.definition, searchQuery)}
                     </div>
                   )}

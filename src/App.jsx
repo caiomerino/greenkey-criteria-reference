@@ -9,7 +9,7 @@ import CriteriaView from './views/CriteriaView'
 import GlossaryView from './views/GlossaryView'
 import PrintView from './views/PrintView'
 import Tooltip from './components/Tooltip'
-import { Menu, List, LayoutGrid } from 'lucide-react'
+import { Menu, List, LayoutGrid, ChevronsDown, ChevronsUp } from 'lucide-react'
 
 const CATEGORY_CODES = ['HH', 'CHP', 'SA', 'CC', 'R', 'A']
 const CATEGORY_LABELS = {
@@ -21,31 +21,166 @@ const CATEGORY_LABELS = {
   'A': 'Attractions',
 }
 
+/* ── Hash Routing ── */
+function parseHash() {
+  const hash = window.location.hash.replace('#', '') || ''
+  const parts = hash.split('/')
+  const view = parts[0] || 'introduction'
+  // #criteria/SECTION_NAME or #criteria/SECTION_NAME/SUBSECTION_NAME
+  // #criterion/4.1  (deep-link to a specific criterion)
+  // #glossary/termName
+  if (view === 'criteria' && parts[1]) {
+    return {
+      view: 'criteria',
+      section: decodeURIComponent(parts[1]),
+      subsection: parts[2] ? decodeURIComponent(parts[2]) : null,
+      showAll: false,
+    }
+  }
+  if (view === 'criterion' && parts[1]) {
+    return { view: 'criterion', criterionNumber: parts[1] }
+  }
+  if (view === 'glossary' && parts[1]) {
+    return { view: 'glossary', term: decodeURIComponent(parts[1]) }
+  }
+  if (view === 'all-criteria') {
+    return { view: 'criteria', section: null, subsection: null, showAll: true }
+  }
+  return { view }
+}
+
+function buildHash(view, section, subsection, showAll) {
+  if (view === 'criteria' && showAll) return '#all-criteria'
+  if (view === 'criteria' && section && subsection) {
+    return `#criteria/${encodeURIComponent(section)}/${encodeURIComponent(subsection)}`
+  }
+  if (view === 'criteria' && section) {
+    return `#criteria/${encodeURIComponent(section)}`
+  }
+  if (view === 'introduction') return '#introduction'
+  return `#${view}`
+}
+
+/* ── Dark Mode ── */
+function getInitialDarkMode() {
+  const stored = localStorage.getItem('gk-dark-mode')
+  if (stored !== null) return stored === 'true'
+  return window.matchMedia('(prefers-color-scheme: dark)').matches
+}
+
+/* ── Register Service Worker ── */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {})
+  })
+}
+
 export default function App() {
   const [activeView, setActiveView] = useState('introduction')
   const [activeSection, setActiveSection] = useState(null)
   const [activeSubsection, setActiveSubsection] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [categoryFilter, setCategoryFilter] = useState([])
-  const [typeFilter, setTypeFilter] = useState(null) // 'imperative' | 'guideline' | null
+  const [typeFilter, setTypeFilter] = useState(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [showAllCriteria, setShowAllCriteria] = useState(false)
   const [isPrintView, setIsPrintView] = useState(false)
+  const [darkMode, setDarkMode] = useState(getInitialDarkMode)
+  const [expandAllSignal, setExpandAllSignal] = useState(0)   // positive = expand, negative = collapse
+  const [highlightCriterion, setHighlightCriterion] = useState(null) // criterion number to auto-expand
+  const [highlightGlossaryTerm, setHighlightGlossaryTerm] = useState(null)
   const mainRef = useRef(null)
 
-  // Navigate to a section
+  // Dark mode effect
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', darkMode)
+    localStorage.setItem('gk-dark-mode', darkMode)
+  }, [darkMode])
+
+  // ── Hash routing: initial load + listen for changes ──
+  useEffect(() => {
+    function applyHash() {
+      const parsed = parseHash()
+      if (parsed.view === 'criterion') {
+        // Find which section/subsection contains this criterion
+        for (const section of data.criteria.sections) {
+          for (const sub of section.subsections) {
+            const found = sub.criteria.find(c => c.number === parsed.criterionNumber)
+            if (found) {
+              setActiveView('criteria')
+              setActiveSection(section.name)
+              setActiveSubsection(sub.name)
+              setShowAllCriteria(false)
+              setHighlightCriterion(parsed.criterionNumber)
+              return
+            }
+          }
+        }
+        // fallback
+        setActiveView('introduction')
+      } else if (parsed.view === 'glossary' && parsed.term) {
+        setActiveView('glossary')
+        setHighlightGlossaryTerm(parsed.term)
+      } else if (parsed.view === 'criteria') {
+        setActiveView('criteria')
+        setActiveSection(parsed.section || null)
+        setActiveSubsection(parsed.subsection || null)
+        setShowAllCriteria(parsed.showAll || (!parsed.section))
+      } else {
+        setActiveView(parsed.view || 'introduction')
+        setActiveSection(null)
+        setActiveSubsection(null)
+        setShowAllCriteria(false)
+      }
+    }
+    applyHash()
+    window.addEventListener('hashchange', applyHash)
+    return () => window.removeEventListener('hashchange', applyHash)
+  }, [])
+
+  // Navigate to a section (updates hash → triggers effect)
   const navigateTo = useCallback((view, section = null, subsection = null) => {
     setActiveView(view)
     setActiveSection(section)
     setActiveSubsection(subsection)
     setSidebarOpen(false)
-    if (view === 'criteria' && !section) {
+    setHighlightCriterion(null)
+    setHighlightGlossaryTerm(null)
+    const showAll = view === 'criteria' && !section
+    if (showAll) {
       setShowAllCriteria(true)
     } else if (view === 'criteria' && section) {
       setShowAllCriteria(false)
     }
+    // Update hash without triggering the listener again
+    const newHash = buildHash(view, section, subsection, showAll)
+    if (window.location.hash !== newHash) {
+      history.pushState(null, '', newHash)
+    }
     if (mainRef.current) {
       mainRef.current.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  }, [])
+
+  // Navigate to a specific criterion (deep-link)
+  const navigateToCriterion = useCallback((criterionNumber) => {
+    for (const section of data.criteria.sections) {
+      for (const sub of section.subsections) {
+        const found = sub.criteria.find(c => c.number === criterionNumber)
+        if (found) {
+          setActiveView('criteria')
+          setActiveSection(section.name)
+          setActiveSubsection(sub.name)
+          setShowAllCriteria(false)
+          setHighlightCriterion(criterionNumber)
+          setSidebarOpen(false)
+          history.pushState(null, '', `#criterion/${criterionNumber}`)
+          if (mainRef.current) {
+            mainRef.current.scrollTo({ top: 0, behavior: 'smooth' })
+          }
+          return
+        }
+      }
     }
   }, [])
 
@@ -105,7 +240,7 @@ export default function App() {
     )
   }, [searchQuery])
 
-  // Print handler — switches to print view, then triggers browser print
+  // Print handler
   const handlePrint = useCallback(() => {
     setIsPrintView(true)
   }, [])
@@ -114,7 +249,6 @@ export default function App() {
     setIsPrintView(false)
   }, [])
 
-  // When print view renders, trigger browser print dialog
   useEffect(() => {
     if (isPrintView) {
       const timer = setTimeout(() => {
@@ -124,14 +258,22 @@ export default function App() {
     }
   }, [isPrintView])
 
-  // Print view — full document layout for clean PDF export
+  // Expand/Collapse All
+  const handleExpandAll = useCallback(() => {
+    setExpandAllSignal(prev => Math.abs(prev) + 1)
+  }, [])
+  const handleCollapseAll = useCallback(() => {
+    setExpandAllSignal(prev => -(Math.abs(prev) + 1))
+  }, [])
+
+  // Print view
   if (isPrintView) {
     return (
-      <div>
-        <div className="no-print sticky top-0 z-50 bg-white border-b border-gk-border px-6 py-3 flex items-center justify-between">
+      <div className={darkMode ? 'dark' : ''}>
+        <div className="no-print sticky top-0 z-50 bg-white dark:bg-gk-dark-surface border-b border-gk-border dark:border-gk-dark-border px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img src="/green-key-logo.jpg" alt="Green Key" className="h-8 w-auto" />
-            <span className="text-sm font-bold text-gk-text">Print Preview</span>
+            <span className="text-sm font-bold text-gk-text dark:text-gk-dark-text">Print Preview</span>
           </div>
           <div className="flex items-center gap-3">
             <button
@@ -142,7 +284,7 @@ export default function App() {
             </button>
             <button
               onClick={handleClosePrintView}
-              className="px-4 py-2 bg-gk-surface text-gk-text text-sm font-semibold rounded-lg hover:bg-slate-200 transition-colors"
+              className="px-4 py-2 bg-gk-surface dark:bg-gk-dark-bg text-gk-text dark:text-gk-dark-text text-sm font-semibold rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
             >
               Back to site
             </button>
@@ -154,13 +296,15 @@ export default function App() {
   }
 
   return (
-    <div className="h-screen flex flex-col font-lato">
+    <div className="h-screen flex flex-col font-lato bg-gk-surface dark:bg-gk-dark-bg text-gk-text dark:text-gk-dark-text">
       {/* Header */}
       <Header
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
         onPrint={handlePrint}
+        darkMode={darkMode}
+        setDarkMode={setDarkMode}
       />
 
       <div className="flex flex-1 overflow-hidden">
@@ -186,25 +330,26 @@ export default function App() {
         {/* Main content */}
         <main
           ref={mainRef}
-          className="flex-1 overflow-y-auto bg-gk-surface"
+          className="flex-1 overflow-y-auto bg-gk-surface dark:bg-gk-dark-bg"
         >
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-20">
             {/* Filter bar when on criteria view */}
             {activeView === 'criteria' && (
-              <div className="mb-6 bg-white rounded-xl border border-gk-border p-4 no-print">
+              <div className="mb-6 bg-white dark:bg-gk-dark-surface rounded-xl border border-gk-border dark:border-gk-dark-border p-4 no-print">
                 {/* View toggle: All vs. Section */}
-                <div className="flex items-center gap-2 mb-3 pb-3 border-b border-gk-border">
-                  <span className="text-xs font-bold text-gk-text-muted uppercase tracking-wide mr-1">View:</span>
+                <div className="flex items-center gap-2 mb-3 pb-3 border-b border-gk-border dark:border-gk-dark-border">
+                  <span className="text-xs font-bold text-gk-text-muted dark:text-gk-dark-text-muted uppercase tracking-wide mr-1">View:</span>
                   <button
                     onClick={() => {
                       setShowAllCriteria(true)
                       setActiveSection(null)
                       setActiveSubsection(null)
+                      history.pushState(null, '', '#all-criteria')
                     }}
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                       showAllCriteria
                         ? 'bg-gk-blue text-white'
-                        : 'bg-gk-surface text-gk-text-muted hover:bg-slate-200'
+                        : 'bg-gk-surface dark:bg-gk-dark-bg text-gk-text-muted dark:text-gk-dark-text-muted hover:bg-slate-200 dark:hover:bg-slate-700'
                     }`}
                   >
                     <List size={13} />
@@ -220,16 +365,36 @@ export default function App() {
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                       !showAllCriteria
                         ? 'bg-gk-blue text-white'
-                        : 'bg-gk-surface text-gk-text-muted hover:bg-slate-200'
+                        : 'bg-gk-surface dark:bg-gk-dark-bg text-gk-text-muted dark:text-gk-dark-text-muted hover:bg-slate-200 dark:hover:bg-slate-700'
                     }`}
                   >
                     <LayoutGrid size={13} />
                     By Section
                   </button>
+
+                  {/* Expand/Collapse All */}
+                  <div className="ml-auto flex items-center gap-1">
+                    <button
+                      onClick={handleExpandAll}
+                      className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-gk-text-muted dark:text-gk-dark-text-muted hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
+                      title="Expand all sections"
+                    >
+                      <ChevronsDown size={13} />
+                      <span className="hidden sm:inline">Expand All</span>
+                    </button>
+                    <button
+                      onClick={handleCollapseAll}
+                      className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-gk-text-muted dark:text-gk-dark-text-muted hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
+                      title="Collapse all sections"
+                    >
+                      <ChevronsUp size={13} />
+                      <span className="hidden sm:inline">Collapse All</span>
+                    </button>
+                  </div>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3">
-                  <span className="text-xs font-bold text-gk-text-muted uppercase tracking-wide">Category:</span>
+                  <span className="text-xs font-bold text-gk-text-muted dark:text-gk-dark-text-muted uppercase tracking-wide">Category:</span>
                   <div className="flex flex-wrap gap-2">
                     {CATEGORY_CODES.map(cat => (
                       <Tooltip key={cat} content={CATEGORY_LABELS[cat]} position="bottom">
@@ -238,7 +403,7 @@ export default function App() {
                           className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${
                             categoryFilter.includes(cat)
                               ? 'bg-gk-blue text-white'
-                              : 'badge-category hover:bg-gk-blue-light'
+                              : 'badge-category hover:bg-gk-blue-light dark:hover:bg-slate-700'
                           }`}
                         >
                           {cat}
@@ -246,8 +411,8 @@ export default function App() {
                       </Tooltip>
                     ))}
                   </div>
-                  <div className="h-5 w-px bg-gk-border mx-1 hidden sm:block" />
-                  <span className="text-xs font-bold text-gk-text-muted uppercase tracking-wide">Type:</span>
+                  <div className="h-5 w-px bg-gk-border dark:bg-gk-dark-border mx-1 hidden sm:block" />
+                  <span className="text-xs font-bold text-gk-text-muted dark:text-gk-dark-text-muted uppercase tracking-wide">Type:</span>
                   <div className="flex gap-2">
                     <Tooltip content="Mandatory criteria — must be met for certification" position="bottom">
                       <button
@@ -255,7 +420,7 @@ export default function App() {
                         className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${
                           typeFilter === 'imperative'
                             ? 'badge-imperative'
-                            : 'badge-category hover:bg-gk-blue-light'
+                            : 'badge-category hover:bg-gk-blue-light dark:hover:bg-slate-700'
                         }`}
                       >
                         Imperative (I)
@@ -267,7 +432,7 @@ export default function App() {
                         className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${
                           typeFilter === 'guideline'
                             ? 'badge-guideline'
-                            : 'badge-category hover:bg-gk-green-light'
+                            : 'badge-category hover:bg-gk-green-light dark:hover:bg-slate-700'
                         }`}
                       >
                         Guideline (G)
@@ -276,14 +441,14 @@ export default function App() {
                   </div>
                   {(categoryFilter.length > 0 || typeFilter || searchQuery) && (
                     <>
-                      <div className="h-5 w-px bg-gk-border mx-1 hidden sm:block" />
+                      <div className="h-5 w-px bg-gk-border dark:bg-gk-dark-border mx-1 hidden sm:block" />
                       <button
                         onClick={clearFilters}
                         className="text-xs text-gk-blue hover:text-gk-blue-dark font-bold"
                       >
                         Clear all filters
                       </button>
-                      <span className="text-xs text-gk-text-muted ml-auto font-semibold">
+                      <span className="text-xs text-gk-text-muted dark:text-gk-dark-text-muted ml-auto font-semibold">
                         {totalFilteredCriteria} of 139 criteria
                       </span>
                     </>
@@ -311,22 +476,29 @@ export default function App() {
                 glossary={data.glossary}
                 navigateTo={navigateTo}
                 showAllCriteria={showAllCriteria}
+                expandAllSignal={expandAllSignal}
+                highlightCriterion={highlightCriterion}
+                navigateToCriterion={navigateToCriterion}
               />
             )}
             {activeView === 'glossary' && (
-              <GlossaryView terms={filteredGlossary} searchQuery={searchQuery} />
+              <GlossaryView
+                terms={filteredGlossary}
+                searchQuery={searchQuery}
+                highlightTerm={highlightGlossaryTerm}
+              />
             )}
           </div>
 
           {/* Footer */}
-          <footer className="border-t border-gk-border bg-white py-6 px-8 text-center no-print">
-            <p className="text-xs text-gk-text-muted">
+          <footer className="border-t border-gk-border dark:border-gk-dark-border bg-white dark:bg-gk-dark-surface py-6 px-8 text-center no-print">
+            <p className="text-xs text-gk-text-muted dark:text-gk-dark-text-muted">
               Green Key Criteria and Explanatory Notes — 1 October 2026 – 31 December 2031
             </p>
-            <p className="text-xs text-gk-text-muted mt-1">
+            <p className="text-xs text-gk-text-muted dark:text-gk-dark-text-muted mt-1">
               © Foundation for Environmental Education (FEE). All rights reserved.
             </p>
-            <p className="text-xs text-gk-text-muted mt-1 italic">
+            <p className="text-xs text-gk-text-muted dark:text-gk-dark-text-muted mt-1 italic">
               Translations are provided for convenience only. The official English text is the authoritative version.
             </p>
             <a
