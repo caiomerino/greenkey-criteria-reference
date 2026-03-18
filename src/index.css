@@ -1,0 +1,137 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Lato', Arial, sans-serif;
+  color: #1E293B;
+  background-color: #F8FAFB;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}
+
+/* Google Translate widget styling override */
+.goog-te-banner-frame {
+  display: none !important;
+}
+body {
+  top: 0 !important;
+}
+.goog-te-gadget {
+  font-family: 'Lato', Arial, sans-serif !important;
+}
+.goog-te-gadget-simple {
+  border: 1px solid #E2E8F0 !important;
+  border-radius: 8px !important;
+  padding: 4px 10px !important;
+  background: white !important;
+  font-size: 13px !important;
+}
+.goog-te-gadget-simple span {
+  color: #1E293B !important;
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  .print-break {
+    page-break-before: always;
+  }
+}
+
+/* Criterion card transitions */
+.criterion-card {
+  transition: all 0.2s ease;
+}
+.criterion-card:hover {
+  box-shadow: 0 2px 8px rgba(0, 102, 204, 0.08);
+}
+
+/* Smooth expand/collapse */
+.expandable-content {
+  overflow: hidden;
+  transition: max-height 0.3s ease, opacity 0.3s ease;
+}
+
+/* Badge styles */
+.badge-imperative {
+  background-color: #0066CC;
+  color: white;
+}
+.badge-guideline {
+  background-color: #51AE32;
+  color: white;
+}
+.badge-category {
+  background-color: #F1F5F9;
+  color: #475569;
+  border: 1px solid #E2E8F0;
+}
+.badge-category.active {
+  background-color: #E6F0FA;
+  color: #0066CC;
+  border-color: #0066CC;
+}
+
+/* Sidebar nav item */
+.nav-item {
+  transition: all 0.15s ease;
+}
+.nav-item:hover {
+  background-color: #F1F5F9;
+}
+.nav-item.active {
+  background-color: #E6F0FA;
+  color: #0066CC;
+  font-weight: 700;
+  border-left: 3px solid #0066CC;
+}
+
+/* Search highlight */
+mark {
+  background-color: #FEF3C7;
+  border-radius: 2px;
+  padding: 0 2px;
+}
+
+/* Mobile sidebar overlay */
+.sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 40;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.sidebar-overlay.open {
+  opacity: 1;
+  pointer-events: auto;
+}
