@@ -20,40 +20,188 @@ const SECTION_SHORT_NAMES = {
   'LIVING ENVIRONMENT': 'Living Environment',
 }
 
+/* ── Formatting helpers (mirrored from CriterionCard for print) ── */
+
+function isListItem(line) {
+  if (!line) return false
+  const t = line.trim()
+  if (t.endsWith(';') || /;\s*(and|or|and\/or)\s*$/.test(t)) return true
+  if (/^[-–—•]/.test(t)) return true
+  if (/^[a-z]\)\s/.test(t)) return true
+  return false
+}
+
+function isListIntroducer(line) {
+  if (!line) return false
+  return line.trim().endsWith(':')
+}
+
+function startsWithLowercase(line) {
+  if (!line) return false
+  const t = line.trim()
+  return t.length > 0 && t[0] === t[0].toLowerCase() && t[0] !== t[0].toUpperCase()
+}
+
+function cleanListItem(text) {
+  let t = text.trim()
+  t = t.replace(/^[-–—•]\s*/, '')
+  t = t.replace(/^[a-z]\)\s*/, '')
+  t = t.replace(/;\s*(and|or|and\/or)\s*$/, '')
+  t = t.replace(/;\s*$/, '')
+  return t
+}
+
+function renderHighlightedLine(text) {
+  if (!text) return text
+  const colonIdx = text.indexOf(': ')
+  if (colonIdx > 0 && colonIdx < 80 && !text.trim().endsWith(':')) {
+    const label = text.substring(0, colonIdx)
+    const rest = text.substring(colonIdx + 2)
+    if (label.length < 80 && /^[A-Z]/.test(label.trim())) {
+      return (
+        <>
+          <strong>{label}:</strong>{' '}
+          <em>{rest}</em>
+        </>
+      )
+    }
+  }
+  return text
+}
+
 function formatNotesForPrint(text) {
   if (!text) return null
-  const paragraphs = text.split('\n').filter(p => p.trim())
+  const lines = text.split('\n').filter(p => p.trim())
+  const elements = []
+  let inList = false
+  let listItems = []
+  let listIntro = null
 
-  return paragraphs.map((para, idx) => {
-    const trimmed = para.trim()
+  const flushList = () => {
+    if (listItems.length > 0) {
+      elements.push(
+        <div key={`list-${elements.length}`} className="print-list-block">
+          {listIntro && (
+            <p className="print-note-para print-italic">{listIntro}</p>
+          )}
+          <ul className="print-bullet-list">
+            {listItems.map((item, j) => (
+              <li key={j} className="print-bullet-item">
+                {renderHighlightedLine(cleanListItem(item))}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )
+      listItems = []
+      listIntro = null
+      inList = false
+    }
+  }
 
+  for (let idx = 0; idx < lines.length; idx++) {
+    const trimmed = lines[idx].trim()
+
+    // Section headings
     if (/^(Relevance|Expectations for implementation|Audit evidence)$/i.test(trimmed)) {
-      return (
+      flushList()
+      elements.push(
         <p key={idx} className="print-note-heading">
           {trimmed}
         </p>
       )
+      continue
     }
+
+    // National adaptation note
     if (/^ⓘ Note on national adaptation/.test(trimmed)) {
-      return (
+      flushList()
+      elements.push(
         <p key={idx} className="print-note-heading print-national">
           {trimmed}
         </p>
       )
+      continue
     }
-    if (/^[-–—•]/.test(trimmed)) {
+
+    // List introducer (ends with colon)
+    if (isListIntroducer(trimmed)) {
+      flushList()
+      const nextLine = idx + 1 < lines.length ? lines[idx + 1].trim() : ''
+      if (isListItem(nextLine) || startsWithLowercase(nextLine)) {
+        inList = true
+        listIntro = trimmed
+      } else {
+        elements.push(
+          <p key={idx} className="print-note-para print-italic">{trimmed}</p>
+        )
+      }
+      continue
+    }
+
+    // List item
+    if (inList && (isListItem(trimmed) || startsWithLowercase(trimmed))) {
+      listItems.push(trimmed)
+      const nextLine = idx + 1 < lines.length ? lines[idx + 1].trim() : ''
+      if (!isListItem(nextLine) && !startsWithLowercase(nextLine)) {
+        flushList()
+      }
+      continue
+    }
+
+    // Standalone list item
+    if (!inList && isListItem(trimmed)) {
+      inList = true
+      listItems.push(trimmed)
+      const nextLine = idx + 1 < lines.length ? lines[idx + 1].trim() : ''
+      if (!isListItem(nextLine) && !startsWithLowercase(nextLine)) {
+        flushList()
+      }
+      continue
+    }
+
+    // Regular paragraph with Label: description highlighting
+    flushList()
+    elements.push(
+      <p key={idx} className="print-note-para">
+        {renderHighlightedLine(trimmed)}
+      </p>
+    )
+  }
+
+  flushList()
+  return elements
+}
+
+/** Format scope paragraphs for print with Label: description highlighting */
+function formatScopeParagraphForPrint(text, idx) {
+  if (!text) return null
+  const trimmed = text.trim()
+
+  // Label: description pattern
+  const colonIdx = trimmed.indexOf(': ')
+  if (colonIdx > 0 && colonIdx < 60 && /^[A-Z]/.test(trimmed) && !trimmed.endsWith(':')) {
+    const label = trimmed.substring(0, colonIdx)
+    const rest = trimmed.substring(colonIdx + 2)
+    if (label.length < 50 && !/\b(is|are|the|this|for|all|has|have|should)\b/i.test(label)) {
       return (
-        <p key={idx} className="print-note-bullet">
-          • {trimmed.replace(/^[-–—•]\s*/, '')}
+        <p key={idx} className="print-para">
+          <strong>{label}:</strong> <em>{rest}</em>
         </p>
       )
     }
+  }
+
+  // Colon-ending line → italic
+  if (trimmed.endsWith(':')) {
     return (
-      <p key={idx} className="print-note-para">
-        {trimmed}
-      </p>
+      <p key={idx} className="print-para print-italic">{trimmed}</p>
     )
-  })
+  }
+
+  return (
+    <p key={idx} className="print-para">{trimmed}</p>
+  )
 }
 
 export default function PrintView({ data }) {
@@ -110,9 +258,7 @@ export default function PrintView({ data }) {
         {data.scope.map((section, i) => (
           <div key={i} className="print-scope-block">
             <h3>{section.heading}</h3>
-            {section.content.map((para, j) => (
-              <p key={j} className="print-para">{para}</p>
-            ))}
+            {section.content.map((para, j) => formatScopeParagraphForPrint(para, j))}
           </div>
         ))}
       </div>
@@ -193,9 +339,15 @@ export default function PrintView({ data }) {
         {data.glossary.map((term, i) => (
           <div key={i} className="print-glossary-term">
             <h4>{term.term}</h4>
-            {term.definition.split('\n').map((para, j) => (
-              <p key={j} className="print-para">{para}</p>
-            ))}
+            {term.definition.split('\n').map((para, j) => {
+              const trimmed = para.trim()
+              if (!trimmed) return null
+              return (
+                <p key={j} className="print-para">
+                  {renderHighlightedLine(trimmed)}
+                </p>
+              )
+            })}
           </div>
         ))}
       </div>

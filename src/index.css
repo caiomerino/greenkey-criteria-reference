@@ -384,6 +384,35 @@ mark {
   margin-bottom: 3px;
   padding-left: 12px;
 }
+.print-italic {
+  font-style: italic;
+}
+.print-list-block {
+  margin: 4px 0;
+}
+.print-bullet-list {
+  list-style: none;
+  padding: 0;
+  margin: 2px 0 6px;
+}
+.print-bullet-item {
+  font-size: 11px;
+  line-height: 1.5;
+  color: #334155;
+  margin-bottom: 2px;
+  padding-left: 14px;
+  position: relative;
+}
+.print-bullet-item::before {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 7px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #94A3B8;
+}
 
 /* Glossary in print */
 .print-glossary-term {

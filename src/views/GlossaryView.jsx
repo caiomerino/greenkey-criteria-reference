@@ -11,26 +11,140 @@ function highlightText(text, query) {
   )
 }
 
-function formatDefinition(text, searchQuery) {
-  if (!text) return null
-  const paragraphs = text.split('\n').filter(p => p.trim())
+/* ── Formatting helpers (mirrored from CriterionCard) ── */
 
-  return paragraphs.map((para, j) => {
-    const trimmed = para.trim()
-    // Bullet-like lines
-    if (/^[-–—•]/.test(trimmed)) {
+function isListItem(line) {
+  if (!line) return false
+  const t = line.trim()
+  if (t.endsWith(';') || /;\s*(and|or|and\/or)\s*$/.test(t)) return true
+  if (/^[-–—•]/.test(t)) return true
+  if (/^[a-z]\)\s/.test(t)) return true
+  return false
+}
+
+function isListIntroducer(line) {
+  if (!line) return false
+  return line.trim().endsWith(':')
+}
+
+function startsWithLowercase(line) {
+  if (!line) return false
+  const t = line.trim()
+  return t.length > 0 && t[0] === t[0].toLowerCase() && t[0] !== t[0].toUpperCase()
+}
+
+function cleanListItem(text) {
+  let t = text.trim()
+  t = t.replace(/^[-–—•]\s*/, '')
+  t = t.replace(/^[a-z]\)\s*/, '')
+  t = t.replace(/;\s*(and|or|and\/or)\s*$/, '')
+  t = t.replace(/;\s*$/, '')
+  return t
+}
+
+function renderHighlightedLine(text, searchQuery) {
+  if (!text) return text
+  const colonIdx = text.indexOf(': ')
+  if (colonIdx > 0 && colonIdx < 80 && !text.trim().endsWith(':')) {
+    const label = text.substring(0, colonIdx)
+    const rest = text.substring(colonIdx + 2)
+    if (label.length < 80 && /^[A-Z]/.test(label.trim())) {
       return (
-        <p key={j} className="text-sm text-gk-text leading-relaxed mb-1.5 pl-4 relative before:content-[''] before:absolute before:left-0 before:top-[0.6em] before:w-1.5 before:h-1.5 before:bg-gk-blue/30 before:rounded-full">
-          {searchQuery ? highlightText(trimmed.replace(/^[-–—•]\s*/, ''), searchQuery) : trimmed.replace(/^[-–—•]\s*/, '')}
-        </p>
+        <>
+          <strong className="text-gk-text">{searchQuery ? highlightText(label, searchQuery) : label}:</strong>{' '}
+          <span className="italic text-gk-text/90">{searchQuery ? highlightText(rest, searchQuery) : rest}</span>
+        </>
       )
     }
-    return (
-      <p key={j} className="text-sm text-gk-text leading-relaxed mb-2 last:mb-0">
-        {searchQuery ? highlightText(trimmed, searchQuery) : trimmed}
+  }
+  return searchQuery ? highlightText(text, searchQuery) : text
+}
+
+function formatDefinition(text, searchQuery) {
+  if (!text) return null
+  const lines = text.split('\n').filter(p => p.trim())
+  const elements = []
+  let inList = false
+  let listItems = []
+  let listIntro = null
+
+  const flushList = () => {
+    if (listItems.length > 0) {
+      elements.push(
+        <div key={`list-${elements.length}`} className="my-2">
+          {listIntro && (
+            <p className="text-sm text-gk-text leading-relaxed mb-1.5 italic">
+              {searchQuery ? highlightText(listIntro, searchQuery) : listIntro}
+            </p>
+          )}
+          <ul className="list-none space-y-1 ml-1">
+            {listItems.map((item, j) => (
+              <li key={j} className="text-sm text-gk-text leading-relaxed flex gap-2">
+                <span className="shrink-0 mt-[7px] w-1.5 h-1.5 rounded-full bg-gk-blue/40" />
+                <span>{searchQuery ? highlightText(cleanListItem(item), searchQuery) : cleanListItem(item)}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )
+      listItems = []
+      listIntro = null
+      inList = false
+    }
+  }
+
+  for (let idx = 0; idx < lines.length; idx++) {
+    const trimmed = lines[idx].trim()
+
+    // List introducer (ends with colon)
+    if (isListIntroducer(trimmed)) {
+      flushList()
+      const nextLine = idx + 1 < lines.length ? lines[idx + 1].trim() : ''
+      if (isListItem(nextLine) || startsWithLowercase(nextLine)) {
+        inList = true
+        listIntro = trimmed
+      } else {
+        elements.push(
+          <p key={idx} className="text-sm text-gk-text leading-relaxed mb-2 italic">
+            {searchQuery ? highlightText(trimmed, searchQuery) : trimmed}
+          </p>
+        )
+      }
+      continue
+    }
+
+    // List item
+    if (inList && (isListItem(trimmed) || startsWithLowercase(trimmed))) {
+      listItems.push(trimmed)
+      const nextLine = idx + 1 < lines.length ? lines[idx + 1].trim() : ''
+      if (!isListItem(nextLine) && !startsWithLowercase(nextLine)) {
+        flushList()
+      }
+      continue
+    }
+
+    // Standalone list item
+    if (!inList && isListItem(trimmed)) {
+      inList = true
+      listItems.push(trimmed)
+      const nextLine = idx + 1 < lines.length ? lines[idx + 1].trim() : ''
+      if (!isListItem(nextLine) && !startsWithLowercase(nextLine)) {
+        flushList()
+      }
+      continue
+    }
+
+    // Regular paragraph with Label: description highlighting
+    flushList()
+    elements.push(
+      <p key={idx} className="text-sm text-gk-text leading-relaxed mb-2 last:mb-0">
+        {renderHighlightedLine(trimmed, searchQuery)}
       </p>
     )
-  })
+  }
+
+  flushList()
+  return elements
 }
 
 export default function GlossaryView({ terms, searchQuery }) {

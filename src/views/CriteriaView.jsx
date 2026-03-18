@@ -1,7 +1,8 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useState } from 'react'
 import CriterionCard from '../components/CriterionCard'
 import {
-  Shield, Users, Droplets, Zap, Trash2, ShoppingBag, TreePine, FileText
+  Shield, Users, Droplets, Zap, Trash2, ShoppingBag, TreePine, FileText,
+  ChevronDown, ChevronRight
 } from 'lucide-react'
 
 const SECTION_ICONS = {
@@ -35,7 +36,18 @@ const SECTION_SHORT_NAMES = {
 }
 
 export default function CriteriaView({ sections, activeSection, activeSubsection, searchQuery, glossary, navigateTo, showAllCriteria }) {
-  const sectionRefs = useRef({})
+  // Track collapsed state for sections and subsections
+  const [collapsedSections, setCollapsedSections] = useState({})
+  const [collapsedSubsections, setCollapsedSubsections] = useState({})
+
+  const toggleSection = (name) => {
+    setCollapsedSections(prev => ({ ...prev, [name]: !prev[name] }))
+  }
+
+  const toggleSubsection = (sectionName, subName) => {
+    const key = `${sectionName}::${subName}`
+    setCollapsedSubsections(prev => ({ ...prev, [key]: !prev[key] }))
+  }
 
   // Filter to show specific section/subsection
   const sectionsToShow = activeSection
@@ -66,7 +78,7 @@ export default function CriteriaView({ sections, activeSection, activeSubsection
     acc + s.subsections.reduce((a, ss) => a + ss.criteria.filter(c => c.type === 'guideline').length, 0), 0)
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* All Criteria header when in that mode */}
       {showAllCriteria && !activeSection && (
         <div className="bg-gradient-to-br from-gk-blue to-gk-blue-dark rounded-2xl p-6 sm:p-8 text-white">
@@ -92,6 +104,7 @@ export default function CriteriaView({ sections, activeSection, activeSubsection
         const Icon = SECTION_ICONS[section.name] || FileText
         const gradient = SECTION_COLORS[section.name] || 'from-gray-600 to-gray-700'
         const shortName = SECTION_SHORT_NAMES[section.name] || section.name
+        const isSectionCollapsed = collapsedSections[section.name]
         
         const subsectionsToShow = activeSubsection
           ? section.subsections.filter(ss => ss.name === activeSubsection)
@@ -105,17 +118,26 @@ export default function CriteriaView({ sections, activeSection, activeSubsection
 
         return (
           <div key={section.name}>
-            {/* Section header */}
-            <div className={`bg-gradient-to-r ${gradient} rounded-2xl p-5 sm:p-6 mb-6 text-white`}>
+            {/* Collapsible section header */}
+            <button
+              onClick={() => toggleSection(section.name)}
+              className={`w-full text-left bg-gradient-to-r ${gradient} rounded-2xl p-5 sm:p-6 mb-4 text-white transition-all hover:shadow-lg group`}
+            >
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center">
                   <Icon size={20} />
                 </div>
-                <div>
+                <div className="flex-1">
                   <h2 className="text-lg sm:text-xl font-black">{shortName}</h2>
                   {section.subsection_summary && (
                     <p className="text-xs opacity-80 mt-0.5 italic">{section.subsection_summary}</p>
                   )}
+                </div>
+                <div className="shrink-0 w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center transition-transform">
+                  {isSectionCollapsed
+                    ? <ChevronRight size={18} />
+                    : <ChevronDown size={18} />
+                  }
                 </div>
               </div>
               <div className="flex flex-wrap gap-2 sm:gap-4 mt-3 text-xs">
@@ -129,31 +151,51 @@ export default function CriteriaView({ sections, activeSection, activeSubsection
                   {guidelineCount} guideline
                 </span>
               </div>
-            </div>
+            </button>
 
-            {/* Subsections */}
-            {subsectionsToShow.map(subsection => (
-              <div key={subsection.name} className="mb-8">
-                {/* Subsection header */}
-                <div className="flex items-center gap-2 mb-4 pb-2 border-b-2 border-gk-border">
-                  <h3 className="text-base font-black text-gk-text">{subsection.name}</h3>
-                  <span className="text-xs text-gk-text-muted bg-gk-surface rounded-full px-2.5 py-0.5 font-semibold">
-                    {subsection.criteria.length} {subsection.criteria.length === 1 ? 'criterion' : 'criteria'}
-                  </span>
-                </div>
+            {/* Section content — collapsible */}
+            {!isSectionCollapsed && (
+              <div className="space-y-6 mb-8">
+                {subsectionsToShow.map(subsection => {
+                  const subKey = `${section.name}::${subsection.name}`
+                  const isSubCollapsed = collapsedSubsections[subKey]
 
-                {/* Criteria cards */}
-                <div className="space-y-3">
-                  {subsection.criteria.map(criterion => (
-                    <CriterionCard
-                      key={criterion.number}
-                      criterion={criterion}
-                      searchQuery={searchQuery}
-                    />
-                  ))}
-                </div>
+                  return (
+                    <div key={subsection.name}>
+                      {/* Collapsible subsection header */}
+                      <button
+                        onClick={() => toggleSubsection(section.name, subsection.name)}
+                        className="w-full text-left flex items-center gap-2 mb-3 pb-2 border-b-2 border-gk-border hover:border-gk-blue/40 transition-colors group"
+                      >
+                        <div className="shrink-0 w-6 h-6 rounded flex items-center justify-center text-gk-text-muted group-hover:text-gk-blue transition-colors">
+                          {isSubCollapsed
+                            ? <ChevronRight size={16} />
+                            : <ChevronDown size={16} />
+                          }
+                        </div>
+                        <h3 className="text-base font-black text-gk-text flex-1">{subsection.name}</h3>
+                        <span className="text-xs text-gk-text-muted bg-gk-surface rounded-full px-2.5 py-0.5 font-semibold shrink-0">
+                          {subsection.criteria.length} {subsection.criteria.length === 1 ? 'criterion' : 'criteria'}
+                        </span>
+                      </button>
+
+                      {/* Subsection criteria — collapsible */}
+                      {!isSubCollapsed && (
+                        <div className="space-y-3 ml-0 sm:ml-2">
+                          {subsection.criteria.map(criterion => (
+                            <CriterionCard
+                              key={criterion.number}
+                              criterion={criterion}
+                              searchQuery={searchQuery}
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
               </div>
-            ))}
+            )}
           </div>
         )
       })}

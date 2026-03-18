@@ -21,48 +21,154 @@ function highlightText(text, query) {
   )
 }
 
+/**
+ * Detects whether a line is a list item based on:
+ * - Ends with ; or ; and or ; or or ; and/or
+ * - Starts with lowercase and follows a colon-ending line
+ * - Starts with a bullet character
+ * - Starts with a letter followed by ) like "a)"
+ */
+function isListItem(line) {
+  if (!line) return false
+  const t = line.trim()
+  if (t.endsWith(';') || /;\s*(and|or|and\/or)\s*$/.test(t)) return true
+  if (/^[-–—•]/.test(t)) return true
+  if (/^[a-z]\)\s/.test(t)) return true
+  return false
+}
+
+function isListIntroducer(line) {
+  if (!line) return false
+  return line.trim().endsWith(':')
+}
+
+function startsWithLowercase(line) {
+  if (!line) return false
+  const t = line.trim()
+  return t.length > 0 && t[0] === t[0].toLowerCase() && t[0] !== t[0].toUpperCase()
+}
+
+/**
+ * Renders a line that may contain a "Label: description" pattern.
+ * If found, bolds the label and italicises the rest after the colon.
+ * Only applies when the colon appears early in the line (first 80 chars)
+ * and isn't a list introducer (doesn't end with colon).
+ */
+function renderHighlightedLine(text) {
+  if (!text) return text
+  
+  // Check for "Label: description" pattern — colon within first portion, not at end
+  const colonIdx = text.indexOf(': ')
+  if (colonIdx > 0 && colonIdx < 80 && !text.trim().endsWith(':')) {
+    const label = text.substring(0, colonIdx)
+    const rest = text.substring(colonIdx + 2)
+    
+    // Only apply if the label looks like a heading/term (starts uppercase, short-ish)
+    if (label.length < 80 && /^[A-Z]/.test(label.trim())) {
+      return (
+        <>
+          <strong className="text-gk-text">{label}:</strong>{' '}
+          <span className="italic text-gk-text/90">{rest}</span>
+        </>
+      )
+    }
+  }
+  
+  return text
+}
+
+/**
+ * Parses explanatory notes into structured blocks with proper formatting.
+ * 
+ * Patterns handled:
+ * 1. Section headings: "Relevance", "Expectations for implementation", "Audit evidence"
+ * 2. National adaptation notes (ⓘ prefix)
+ * 3. List-introducing lines (ending with ":")  → rendered in italic
+ * 4. List items (ending with ";", "; and", "; or") → rendered as bullet points
+ * 5. Continuation items (lowercase start after list) → rendered as bullet points
+ * 6. "Label: description" patterns → bold label, italic description
+ * 7. Regular paragraphs
+ */
 function formatNotes(text) {
   if (!text) return null
   
-  const paragraphs = text.split('\n').filter(p => p.trim())
+  const lines = text.split('\n').filter(p => p.trim())
+  const elements = []
+  let inList = false // tracks whether we're inside a list context
+  let listItems = [] // accumulates list items
+  let listIntro = null // the introducing line for the current list
   
-  return paragraphs.map((para, idx) => {
-    const trimmed = para.trim()
+  const flushList = () => {
+    if (listItems.length > 0) {
+      elements.push(
+        <div key={`list-${elements.length}`} className="my-2">
+          {listIntro && (
+            <p className="text-sm text-gk-text leading-relaxed mb-1.5 italic">
+              {listIntro}
+            </p>
+          )}
+          <ul className="list-none space-y-1 ml-1">
+            {listItems.map((item, j) => (
+              <li key={j} className="text-sm text-gk-text leading-relaxed flex gap-2">
+                <span className="shrink-0 mt-[7px] w-1.5 h-1.5 rounded-full bg-gk-blue/40" />
+                <span>{cleanListItem(item)}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )
+      listItems = []
+      listIntro = null
+      inList = false
+    }
+  }
+  
+  for (let idx = 0; idx < lines.length; idx++) {
+    const trimmed = lines[idx].trim()
     
-    // Section headings: Relevance, Expectations for implementation, Audit evidence
-    if (/^(Relevance)$/i.test(trimmed)) {
-      return (
+    // Section heading: Relevance
+    if (/^Relevance$/i.test(trimmed)) {
+      flushList()
+      elements.push(
         <div key={idx} className="mt-5 first:mt-0 mb-2">
           <h4 className="text-xs font-black uppercase tracking-wider text-gk-blue border-b border-gk-blue/20 pb-1">
             {trimmed}
           </h4>
         </div>
       )
+      continue
     }
     
+    // Section heading: Expectations for implementation
     if (/^Expectations for implementation$/i.test(trimmed)) {
-      return (
+      flushList()
+      elements.push(
         <div key={idx} className="mt-5 first:mt-0 mb-2">
           <h4 className="text-xs font-black uppercase tracking-wider text-gk-green-web border-b border-gk-green-web/20 pb-1">
             {trimmed}
           </h4>
         </div>
       )
+      continue
     }
 
+    // Section heading: Audit evidence
     if (/^Audit evidence$/i.test(trimmed)) {
-      return (
+      flushList()
+      elements.push(
         <div key={idx} className="mt-5 first:mt-0 mb-2">
           <h4 className="text-xs font-black uppercase tracking-wider text-slate-500 border-b border-slate-300/50 pb-1">
             {trimmed}
           </h4>
         </div>
       )
+      continue
     }
     
     // National adaptation note
     if (/^ⓘ Note on national adaptation/.test(trimmed)) {
-      return (
+      flushList()
+      elements.push(
         <div key={idx} className="bg-amber-50 border border-amber-200 rounded-lg p-3 mt-4">
           <h4 className="text-xs font-black uppercase tracking-wider mb-2 text-amber-700">
             <Info size={12} className="inline mr-1 -mt-0.5" />
@@ -70,24 +176,89 @@ function formatNotes(text) {
           </h4>
         </div>
       )
+      continue
     }
 
-    // Bullet-like lines starting with dash or special chars
-    if (/^[-–—•]/.test(trimmed) || /^[a-z]\)/.test(trimmed)) {
-      return (
-        <p key={idx} className="text-sm text-gk-text leading-relaxed mb-1.5 last:mb-0 pl-4 relative before:content-[''] before:absolute before:left-0 before:top-[0.6em] before:w-1.5 before:h-1.5 before:bg-gk-blue/30 before:rounded-full">
-          {trimmed.replace(/^[-–—•]\s*/, '')}
-        </p>
-      )
+    // Check if this line introduces a list (ends with colon)
+    if (isListIntroducer(trimmed)) {
+      flushList() // flush any previous list
+      
+      // Check if next lines are list items
+      const nextLine = idx + 1 < lines.length ? lines[idx + 1].trim() : ''
+      if (isListItem(nextLine) || startsWithLowercase(nextLine)) {
+        // This is a list introducer — will be rendered as italic intro before bullets
+        inList = true
+        listIntro = trimmed
+      } else {
+        // It's a colon-ending sentence but not followed by a list
+        // Render as italic paragraph
+        elements.push(
+          <p key={idx} className="text-sm text-gk-text leading-relaxed mb-2 italic">
+            {trimmed}
+          </p>
+        )
+      }
+      continue
     }
     
-    // Regular paragraph
-    return (
+    // List item detection
+    if (inList && (isListItem(trimmed) || startsWithLowercase(trimmed))) {
+      listItems.push(trimmed)
+      
+      // Check if this is the last item in the list
+      // (next line is not a list item and doesn't start with lowercase)
+      const nextLine = idx + 1 < lines.length ? lines[idx + 1].trim() : ''
+      if (!isListItem(nextLine) && !startsWithLowercase(nextLine)) {
+        flushList()
+      }
+      continue
+    }
+    
+    // Standalone list item without a preceding colon introducer
+    // (semicolon-ending or lowercase-starting)
+    if (!inList && isListItem(trimmed)) {
+      inList = true
+      listItems.push(trimmed)
+      const nextLine = idx + 1 < lines.length ? lines[idx + 1].trim() : ''
+      if (!isListItem(nextLine) && !startsWithLowercase(nextLine)) {
+        flushList()
+      }
+      continue
+    }
+    
+    // Regular paragraph — check for "Label: description" highlighting
+    flushList()
+    elements.push(
       <p key={idx} className="text-sm text-gk-text leading-relaxed mb-2 last:mb-0">
-        {trimmed}
+        {renderHighlightedLine(trimmed)}
       </p>
     )
-  })
+  }
+  
+  // Flush any remaining list
+  flushList()
+  
+  return elements
+}
+
+/**
+ * Cleans a list item by removing leading bullet chars, semicolons, and
+ * trailing "; and", "; or", "; and/or" from the end.
+ */
+function cleanListItem(text) {
+  let t = text.trim()
+  // Remove leading bullet chars
+  t = t.replace(/^[-–—•]\s*/, '')
+  // Remove leading "a) " style markers
+  t = t.replace(/^[a-z]\)\s*/, '')
+  // Clean trailing semicolon patterns but preserve the text
+  t = t.replace(/;\s*(and|or|and\/or)\s*$/, '')
+  t = t.replace(/;\s*$/, '')
+  // Capitalise first letter if it was lowercase
+  if (t.length > 0 && t[0] === t[0].toLowerCase() && t[0] !== t[0].toUpperCase()) {
+    // Don't capitalize if it looks like a continuation
+  }
+  return t
 }
 
 export default function CriterionCard({ criterion, searchQuery }) {
