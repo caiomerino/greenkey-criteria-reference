@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react'
-import { ChevronDown, ChevronRight, Info } from 'lucide-react'
-import Tooltip from './Tooltip'
+import { motion, AnimatePresence } from 'framer-motion'
+import { ChevronDown, Info } from 'lucide-react'
+import { Card } from './ui/card'
+import { Badge } from './ui/badge'
+import { Tooltip } from './ui/tooltip'
 
 const CATEGORY_LABELS = {
   'HH': 'Hotels & Hostels',
@@ -121,8 +124,8 @@ function renderHighlightedLine(text, navigateToCriterion) {
     if (label.length < 80 && /^[A-Z]/.test(label.trim())) {
       return (
         <>
-          <strong className="text-gk-text dark:text-gk-dark-text">{renderWithCrossRefs(label, navigateToCriterion)}:</strong>{' '}
-          <span className="italic text-gk-text/90 dark:text-gk-dark-text/90">{renderWithCrossRefs(rest, navigateToCriterion)}</span>
+          <strong className="text-foreground">{renderWithCrossRefs(label, navigateToCriterion)}:</strong>{' '}
+          <span className="italic text-foreground/90">{renderWithCrossRefs(rest, navigateToCriterion)}</span>
         </>
       )
     }
@@ -145,14 +148,14 @@ function formatNotes(text, navigateToCriterion) {
       elements.push(
         <div key={`list-${elements.length}`} className="my-2">
           {listIntro && (
-            <p className="text-sm text-gk-text dark:text-gk-dark-text leading-relaxed mb-1.5 italic">
+            <p className="text-sm text-foreground leading-relaxed mb-1.5 italic">
               {renderWithCrossRefs(listIntro, navigateToCriterion)}
             </p>
           )}
           <ul className="list-none space-y-1 ml-1">
             {listItems.map((item, j) => (
-              <li key={j} className="text-sm text-gk-text dark:text-gk-dark-text leading-relaxed flex gap-2">
-                <span className="shrink-0 mt-[7px] w-1.5 h-1.5 rounded-full bg-gk-blue/40" />
+              <li key={j} className="text-sm text-foreground leading-relaxed flex gap-2">
+                <span className="shrink-0 mt-[7px] w-1.5 h-1.5 rounded-full bg-primary/40" />
                 <span>{renderWithCrossRefs(cleanListItem(item), navigateToCriterion)}</span>
               </li>
             ))}
@@ -225,7 +228,7 @@ function formatNotes(text, navigateToCriterion) {
         listIntro = trimmed
       } else {
         elements.push(
-          <p key={idx} className="text-sm text-gk-text dark:text-gk-dark-text leading-relaxed mb-2 italic">
+          <p key={idx} className="text-sm text-foreground leading-relaxed mb-2 italic">
             {renderWithCrossRefs(trimmed, navigateToCriterion)}
           </p>
         )
@@ -254,7 +257,7 @@ function formatNotes(text, navigateToCriterion) {
     
     flushList()
     elements.push(
-      <p key={idx} className="text-sm text-gk-text dark:text-gk-dark-text leading-relaxed mb-2 last:mb-0">
+      <p key={idx} className="text-sm text-foreground leading-relaxed mb-2 last:mb-0">
         {renderHighlightedLine(trimmed, navigateToCriterion)}
       </p>
     )
@@ -284,14 +287,14 @@ export default function CriterionCard({ criterion, searchQuery, autoExpand, navi
   const { number, statement, type, categories, has_national_note, explanatory_notes } = criterion
   
   return (
-    <div className={`criterion-card bg-white dark:bg-gk-dark-surface rounded-xl border overflow-hidden ${
+    <Card className={`overflow-hidden transition-all duration-200 hover:shadow-md ${
       autoExpand
         ? 'border-gk-blue ring-2 ring-gk-blue/30'
-        : 'border-gk-border dark:border-gk-dark-border'
+        : ''
     }`}>
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full text-left p-4 sm:p-5 flex items-start gap-3 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors"
+        className="w-full text-left p-4 sm:p-5 flex items-start gap-3 hover:bg-accent/10 transition-colors"
       >
         <div className={`shrink-0 w-12 h-12 rounded-lg flex items-center justify-center text-white font-bold text-sm ${
           type === 'imperative' ? 'bg-gk-blue' : 'bg-gk-green-web'
@@ -300,22 +303,20 @@ export default function CriterionCard({ criterion, searchQuery, autoExpand, navi
         </div>
         
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-gk-text dark:text-gk-dark-text leading-relaxed pr-4">
+          <p className="text-sm font-semibold text-foreground leading-relaxed pr-4">
             {searchQuery ? highlightText(statement, searchQuery) : statement}
           </p>
           
           <div className="flex flex-wrap items-center gap-1.5 mt-2">
-            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide ${
-              type === 'imperative' ? 'badge-imperative' : 'badge-guideline'
-            }`}>
+            <Badge variant={type === 'imperative' ? 'imperative' : 'guideline'}>
               {type === 'imperative' ? 'Imperative' : 'Guideline'}
-            </span>
+            </Badge>
             
             {categories.map(cat => (
               <Tooltip key={cat} content={CATEGORY_LABELS[cat] || cat} position="top">
-                <span className="badge-category px-2 py-0.5 rounded text-[10px] font-bold inline-block">
+                <Badge variant="category" className="cursor-help">
                   {cat}
-                </span>
+                </Badge>
               </Tooltip>
             ))}
             
@@ -330,21 +331,35 @@ export default function CriterionCard({ criterion, searchQuery, autoExpand, navi
           </div>
         </div>
         
-        <div className="shrink-0 mt-1">
-          {expanded
-            ? <ChevronDown size={18} className="text-gk-text-muted dark:text-gk-dark-text-muted" />
-            : <ChevronRight size={18} className="text-gk-text-muted dark:text-gk-dark-text-muted" />
-          }
-        </div>
+        <motion.div
+          className="shrink-0 mt-1"
+          animate={{ rotate: expanded ? 180 : 0 }}
+          transition={{ duration: 0.2, ease: [0.21, 0.47, 0.32, 0.98] }}
+        >
+          <ChevronDown size={18} className="text-muted-foreground" />
+        </motion.div>
       </button>
       
-      {expanded && explanatory_notes && (
-        <div className="border-t border-gk-border dark:border-gk-dark-border bg-slate-50/50 dark:bg-slate-800/30 px-4 sm:px-5 py-4 sm:py-5">
-          <div className="ml-0 sm:ml-15">
-            {formatNotes(explanatory_notes, navigateToCriterion)}
-          </div>
-        </div>
-      )}
-    </div>
+      <AnimatePresence initial={false}>
+        {expanded && explanatory_notes && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{
+              height: { duration: 0.3, ease: [0.21, 0.47, 0.32, 0.98] },
+              opacity: { duration: 0.2, delay: 0.05 },
+            }}
+            className="overflow-hidden"
+          >
+            <div className="border-t border-border bg-secondary/30 px-4 sm:px-5 py-4 sm:py-5">
+              <div className="ml-0 sm:ml-15">
+                {formatNotes(explanatory_notes, navigateToCriterion)}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </Card>
   )
 }

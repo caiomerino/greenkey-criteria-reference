@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { BookOpen, ChevronDown, ChevronRight } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { BookOpen, ChevronDown } from 'lucide-react'
+import { Card } from '../components/ui/card'
+import FadeIn from '../components/FadeIn'
 
 function highlightText(text, query) {
   if (!query || !text) return text
@@ -51,8 +54,8 @@ function renderHighlightedLine(text, searchQuery) {
     if (label.length < 80 && /^[A-Z]/.test(label.trim())) {
       return (
         <>
-          <strong className="text-gk-text">{searchQuery ? highlightText(label, searchQuery) : label}:</strong>{' '}
-          <span className="italic text-gk-text/90">{searchQuery ? highlightText(rest, searchQuery) : rest}</span>
+          <strong className="text-foreground">{searchQuery ? highlightText(label, searchQuery) : label}:</strong>{' '}
+          <span className="italic text-foreground/90">{searchQuery ? highlightText(rest, searchQuery) : rest}</span>
         </>
       )
     }
@@ -73,14 +76,14 @@ function formatDefinition(text, searchQuery) {
       elements.push(
         <div key={`list-${elements.length}`} className="my-2">
           {listIntro && (
-            <p className="text-sm text-gk-text leading-relaxed mb-1.5 italic">
+            <p className="text-sm text-foreground leading-relaxed mb-1.5 italic">
               {searchQuery ? highlightText(listIntro, searchQuery) : listIntro}
             </p>
           )}
           <ul className="list-none space-y-1 ml-1">
             {listItems.map((item, j) => (
-              <li key={j} className="text-sm text-gk-text leading-relaxed flex gap-2">
-                <span className="shrink-0 mt-[7px] w-1.5 h-1.5 rounded-full bg-gk-blue/40" />
+              <li key={j} className="text-sm text-foreground leading-relaxed flex gap-2">
+                <span className="shrink-0 mt-[7px] w-1.5 h-1.5 rounded-full bg-primary/40" />
                 <span>{searchQuery ? highlightText(cleanListItem(item), searchQuery) : cleanListItem(item)}</span>
               </li>
             ))}
@@ -105,7 +108,7 @@ function formatDefinition(text, searchQuery) {
         listIntro = trimmed
       } else {
         elements.push(
-          <p key={idx} className="text-sm text-gk-text leading-relaxed mb-2 italic">
+          <p key={idx} className="text-sm text-foreground leading-relaxed mb-2 italic">
             {searchQuery ? highlightText(trimmed, searchQuery) : trimmed}
           </p>
         )
@@ -137,7 +140,7 @@ function formatDefinition(text, searchQuery) {
     // Regular paragraph with Label: description highlighting
     flushList()
     elements.push(
-      <p key={idx} className="text-sm text-gk-text leading-relaxed mb-2 last:mb-0">
+      <p key={idx} className="text-sm text-foreground leading-relaxed mb-2 last:mb-0">
         {renderHighlightedLine(trimmed, searchQuery)}
       </p>
     )
@@ -179,40 +182,44 @@ export default function GlossaryView({ terms, searchQuery, highlightTerm }) {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-br from-gk-blue to-gk-blue-dark rounded-2xl p-6 sm:p-8 text-white">
-        <div className="flex items-center gap-3 mb-3">
-          <BookOpen size={28} />
-          <h1 className="text-2xl font-black">Glossary</h1>
-        </div>
-        <p className="text-blue-100 text-sm leading-relaxed max-w-2xl">
-          A glossary clarifying the terminology and concepts used in the Green Key criteria. <strong className="text-white">{terms.length} terms</strong> defined.
-        </p>
-      </div>
+      <FadeIn>
+        <Card className="bg-gradient-to-br from-[hsl(var(--gk-blue))] to-[hsl(211,100%,30%)] border-0 p-6 sm:p-8 text-white overflow-hidden">
+          <div className="flex items-center gap-3 mb-3">
+            <BookOpen size={28} />
+            <h1 className="text-2xl font-black">Glossary</h1>
+          </div>
+          <p className="text-blue-100 text-sm leading-relaxed max-w-2xl">
+            A glossary clarifying the terminology and concepts used in the Green Key criteria. <strong className="text-white">{terms.length} terms</strong> defined.
+          </p>
+        </Card>
+      </FadeIn>
 
       {/* Letter jump nav */}
-      <div className="bg-white dark:bg-gk-dark-surface rounded-xl border border-gk-border dark:border-gk-dark-border p-4 no-print">
-        <div className="flex flex-wrap gap-1">
-          {letters.map(letter => (
-            <a
-              key={letter}
-              href={`#glossary-${letter}`}
-              onClick={(e) => {
-                e.preventDefault()
-                document.getElementById(`glossary-${letter}`)?.scrollIntoView({ behavior: 'smooth' })
-              }}
-              className="w-8 h-8 flex items-center justify-center rounded-lg text-xs font-bold text-gk-blue hover:bg-gk-blue-light transition-colors"
-            >
-              {letter}
-            </a>
-          ))}
-        </div>
-      </div>
+      <FadeIn delay={0.05}>
+        <Card className="p-4 no-print">
+          <div className="flex flex-wrap gap-1">
+            {letters.map(letter => (
+              <a
+                key={letter}
+                href={`#glossary-${letter}`}
+                onClick={(e) => {
+                  e.preventDefault()
+                  document.getElementById(`glossary-${letter}`)?.scrollIntoView({ behavior: 'smooth' })
+                }}
+                className="w-8 h-8 flex items-center justify-center rounded-lg text-xs font-bold text-[hsl(var(--gk-blue))] hover:bg-secondary transition-colors"
+              >
+                {letter}
+              </a>
+            ))}
+          </div>
+        </Card>
+      </FadeIn>
 
       {/* Terms by letter */}
       {letters.map(letter => (
         <div key={letter} id={`glossary-${letter}`}>
-          <div className="sticky top-0 bg-gk-surface dark:bg-gk-dark-bg z-10 py-2">
-            <span className="inline-flex w-10 h-10 rounded-lg bg-gk-blue text-white font-black text-lg items-center justify-center">
+          <div className="sticky top-0 bg-background z-10 py-2">
+            <span className="inline-flex w-10 h-10 rounded-lg bg-[hsl(var(--gk-blue))] text-white font-black text-lg items-center justify-center">
               {letter}
             </span>
           </div>
@@ -223,36 +230,53 @@ export default function GlossaryView({ terms, searchQuery, highlightTerm }) {
                 <div
                   key={i}
                   ref={highlightTerm === term.term ? highlightRef : null}
-                  className={`bg-white dark:bg-gk-dark-surface rounded-xl border overflow-hidden ${
-                    highlightTerm === term.term
-                      ? 'border-gk-blue ring-2 ring-gk-blue/30'
-                      : 'border-gk-border dark:border-gk-dark-border'
-                  }`}
                 >
-                  <button
-                    onClick={() => toggleTerm(term.term)}
-                    className="w-full text-left p-4 flex items-center gap-3 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors"
-                  >
-                    <div className="flex-1">
-                      <h3 className="text-sm font-bold text-gk-text dark:text-gk-dark-text">
-                        {searchQuery ? highlightText(term.term, searchQuery) : term.term}
-                      </h3>
-                      {!isExpanded && (
-                        <p className="text-xs text-gk-text-muted mt-1 line-clamp-1">
-                          {term.definition.split('\n')[0]}
-                        </p>
+                  <Card className={`overflow-hidden transition-all duration-200 hover:shadow-md ${
+                    highlightTerm === term.term
+                      ? 'border-[hsl(var(--gk-blue))] ring-2 ring-[hsl(var(--gk-blue))]/30'
+                      : ''
+                  }`}>
+                    <button
+                      onClick={() => toggleTerm(term.term)}
+                      className="w-full text-left p-4 flex items-center gap-3 hover:bg-accent/10 transition-colors"
+                    >
+                      <div className="flex-1">
+                        <h3 className="text-sm font-bold text-foreground">
+                          {searchQuery ? highlightText(term.term, searchQuery) : term.term}
+                        </h3>
+                        {!isExpanded && (
+                          <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
+                            {term.definition.split('\n')[0]}
+                          </p>
+                        )}
+                      </div>
+                      <motion.div
+                        animate={{ rotate: isExpanded ? 180 : 0 }}
+                        transition={{ duration: 0.2, ease: [0.21, 0.47, 0.32, 0.98] }}
+                        className="shrink-0"
+                      >
+                        <ChevronDown size={16} className="text-muted-foreground" />
+                      </motion.div>
+                    </button>
+                    <AnimatePresence initial={false}>
+                      {isExpanded && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{
+                            height: { duration: 0.3, ease: [0.21, 0.47, 0.32, 0.98] },
+                            opacity: { duration: 0.2, delay: 0.05 },
+                          }}
+                          className="overflow-hidden"
+                        >
+                          <div className="border-t border-border bg-secondary/30 p-4">
+                            {formatDefinition(term.definition, searchQuery)}
+                          </div>
+                        </motion.div>
                       )}
-                    </div>
-                    {isExpanded
-                      ? <ChevronDown size={16} className="text-gk-text-muted shrink-0" />
-                      : <ChevronRight size={16} className="text-gk-text-muted shrink-0" />
-                    }
-                  </button>
-                  {isExpanded && (
-                    <div className="border-t border-gk-border dark:border-gk-dark-border bg-slate-50/50 dark:bg-slate-800/30 p-4">
-                      {formatDefinition(term.definition, searchQuery)}
-                    </div>
-                  )}
+                    </AnimatePresence>
+                  </Card>
                 </div>
               )
             })}

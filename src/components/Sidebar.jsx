@@ -1,9 +1,14 @@
 import React, { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   BookOpen, Shield, Layers, FileText, ChevronDown, ChevronRight,
-  Droplets, Zap, Trash2, ShoppingBag, TreePine, Users, Eye, X,
+  Droplets, Zap, Trash2, ShoppingBag, TreePine, Users, X,
   Home, List, Target
 } from 'lucide-react'
+import { ScrollArea } from './ui/scroll-area'
+import { Separator } from './ui/separator'
+import { Badge } from './ui/badge'
+import { Button } from './ui/button'
 
 const SECTION_ICONS = {
   'SUSTAINABLE MANAGEMENT': Shield,
@@ -45,7 +50,7 @@ export default function Sidebar({ data, activeView, activeSection, activeSubsect
     <aside
       className={`
         fixed lg:static inset-y-0 left-0 z-50
-        w-72 bg-white dark:bg-gk-dark-surface border-r border-gk-border dark:border-gk-dark-border
+        w-72 bg-card border-r border-border
         flex flex-col
         transform transition-transform duration-300 ease-in-out
         ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
@@ -53,154 +58,171 @@ export default function Sidebar({ data, activeView, activeSection, activeSubsect
       `}
     >
       {/* Mobile close */}
-      <div className="lg:hidden flex items-center justify-between p-4 border-b border-gk-border dark:border-gk-dark-border">
-        <span className="font-bold text-gk-text dark:text-gk-dark-text text-sm">Navigation</span>
-        <button onClick={onClose} className="p-1 rounded hover:bg-gk-surface dark:hover:bg-gk-dark-bg">
+      <div className="lg:hidden flex items-center justify-between p-4 border-b border-border">
+        <span className="font-bold text-foreground text-sm">Navigation</span>
+        <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8">
           <X size={18} />
-        </button>
+        </Button>
       </div>
 
       {/* Nav items */}
-      <nav className="flex-1 overflow-y-auto py-3 px-2">
-        {/* Top-level nav */}
-        <div className="mb-2">
+      <ScrollArea className="flex-1">
+        <nav className="py-3 px-2">
+          {/* Top-level nav */}
+          <div className="mb-2">
+            <button
+              onClick={() => navigateTo('introduction')}
+              className={`nav-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm ${
+                activeView === 'introduction' ? 'active' : ''
+              }`}
+            >
+              <Home size={16} className="shrink-0" />
+              <span>Introduction</span>
+            </button>
+
+            <button
+              onClick={() => navigateTo('categories')}
+              className={`nav-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm ${
+                activeView === 'categories' ? 'active' : ''
+              }`}
+            >
+              <Layers size={16} className="shrink-0" />
+              <span>Category Definitions</span>
+            </button>
+
+            <button
+              onClick={() => navigateTo('scope')}
+              className={`nav-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm ${
+                activeView === 'scope' ? 'active' : ''
+              }`}
+            >
+              <Target size={16} className="shrink-0" />
+              <span>Scope</span>
+            </button>
+          </div>
+
+          <div className="mx-3 my-3">
+            <Separator />
+          </div>
+
+          {/* Criteria sections label */}
+          <div className="px-3 mb-2">
+            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+              Criteria Sections
+            </span>
+          </div>
+
+          {/* All Criteria link */}
           <button
-            onClick={() => navigateTo('introduction')}
-            className={`nav-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm ${
-              activeView === 'introduction' ? 'active' : ''
+            onClick={() => navigateTo('criteria', null, null)}
+            className={`nav-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm mb-0.5 ${
+              activeView === 'criteria' && showAllCriteria ? 'active' : ''
             }`}
           >
-            <Home size={16} className="shrink-0" />
-            <span>Introduction</span>
+            <List size={15} className="shrink-0 text-gk-blue" />
+            <span className="flex-1">All Criteria</span>
+            <Badge variant="outline" className="text-[10px] px-2 py-0.5 rounded-full">
+              {totalCriteria}
+            </Badge>
           </button>
 
+          {/* Criteria sections */}
+          {data.criteria.sections.map(section => {
+            const Icon = SECTION_ICONS[section.name] || FileText
+            const shortName = SECTION_SHORT_NAMES[section.name] || section.name
+            const isExpanded = expandedSections[section.name]
+            const count = getCriteriaCount(section.name)
+            const isActive = activeView === 'criteria' && activeSection === section.name && !showAllCriteria
+
+            return (
+              <div key={section.name} className="mb-0.5">
+                <button
+                  onClick={() => {
+                    toggleSection(section.name)
+                    navigateTo('criteria', section.name, null)
+                  }}
+                  className={`nav-item w-full text-left flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm ${
+                    isActive && !activeSubsection ? 'active' : ''
+                  }`}
+                >
+                  <Icon size={15} className="shrink-0 text-gk-green-web" />
+                  <span className="flex-1 truncate">{shortName}</span>
+                  <Badge variant="outline" className="text-[10px] px-2 py-0.5 rounded-full">
+                    {count}
+                  </Badge>
+                  <motion.div
+                    animate={{ rotate: isExpanded ? 180 : 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="shrink-0"
+                  >
+                    <ChevronDown size={14} className="text-muted-foreground" />
+                  </motion.div>
+                </button>
+
+                {/* Subsections with animation */}
+                <AnimatePresence initial={false}>
+                  {isExpanded && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.25, ease: [0.21, 0.47, 0.32, 0.98] }}
+                      className="overflow-hidden"
+                    >
+                      <div className="ml-6 pl-3 border-l-2 border-border">
+                        {section.subsections.map(sub => {
+                          const subCount = filteredSections
+                            ?.find(s => s.name === section.name)
+                            ?.subsections.find(ss => ss.name === sub.name)
+                            ?.criteria.length || 0
+                          const isSubActive = activeView === 'criteria' &&
+                            activeSection === section.name &&
+                            activeSubsection === sub.name
+
+                          return (
+                            <button
+                              key={sub.name}
+                              onClick={() => navigateTo('criteria', section.name, sub.name)}
+                              className={`nav-item w-full text-left flex items-center gap-2 px-3 py-2 rounded-lg text-xs ${
+                                isSubActive ? 'active' : ''
+                              }`}
+                            >
+                              <span className="flex-1 truncate">{sub.name}</span>
+                              <span className="text-[10px] text-muted-foreground">{subCount}</span>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            )
+          })}
+
+          <div className="mx-3 my-3">
+            <Separator />
+          </div>
+
+          {/* Glossary */}
           <button
-            onClick={() => navigateTo('categories')}
+            onClick={() => navigateTo('glossary')}
             className={`nav-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm ${
-              activeView === 'categories' ? 'active' : ''
+              activeView === 'glossary' ? 'active' : ''
             }`}
           >
-            <Layers size={16} className="shrink-0" />
-            <span>Category Definitions</span>
+            <BookOpen size={16} className="shrink-0" />
+            <span>Glossary</span>
+            <Badge variant="outline" className="text-[10px] px-2 py-0.5 rounded-full ml-auto">
+              {data.glossary.length}
+            </Badge>
           </button>
-
-          <button
-            onClick={() => navigateTo('scope')}
-            className={`nav-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm ${
-              activeView === 'scope' ? 'active' : ''
-            }`}
-          >
-            <Target size={16} className="shrink-0" />
-            <span>Scope</span>
-          </button>
-        </div>
-
-        {/* Divider */}
-        <div className="mx-3 my-3 border-t border-gk-border dark:border-gk-dark-border" />
-
-        {/* Criteria sections label */}
-        <div className="px-3 mb-2">
-          <span className="text-[10px] font-bold text-gk-text-muted dark:text-gk-dark-text-muted uppercase tracking-wider">
-            Criteria Sections
-          </span>
-        </div>
-
-        {/* All Criteria link */}
-        <button
-          onClick={() => navigateTo('criteria', null, null)}
-          className={`nav-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm mb-0.5 ${
-            activeView === 'criteria' && showAllCriteria ? 'active' : ''
-          }`}
-        >
-          <List size={15} className="shrink-0 text-gk-blue" />
-          <span className="flex-1">All Criteria</span>
-          <span className="text-[10px] text-gk-text-muted dark:text-gk-dark-text-muted font-bold bg-gk-surface dark:bg-gk-dark-bg rounded-full px-2 py-0.5">
-            {totalCriteria}
-          </span>
-        </button>
-
-        {/* Criteria sections */}
-        {data.criteria.sections.map(section => {
-          const Icon = SECTION_ICONS[section.name] || FileText
-          const shortName = SECTION_SHORT_NAMES[section.name] || section.name
-          const isExpanded = expandedSections[section.name]
-          const count = getCriteriaCount(section.name)
-          const isActive = activeView === 'criteria' && activeSection === section.name && !showAllCriteria
-
-          return (
-            <div key={section.name} className="mb-0.5">
-              <button
-                onClick={() => {
-                  toggleSection(section.name)
-                  navigateTo('criteria', section.name, null)
-                }}
-                className={`nav-item w-full text-left flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm ${
-                  isActive && !activeSubsection ? 'active' : ''
-                }`}
-              >
-                <Icon size={15} className="shrink-0 text-gk-green" />
-                <span className="flex-1 truncate">{shortName}</span>
-                <span className="text-[10px] text-gk-text-muted dark:text-gk-dark-text-muted font-bold bg-gk-surface dark:bg-gk-dark-bg rounded-full px-2 py-0.5">
-                  {count}
-                </span>
-                {isExpanded
-                  ? <ChevronDown size={14} className="shrink-0 text-gk-text-muted dark:text-gk-dark-text-muted" />
-                  : <ChevronRight size={14} className="shrink-0 text-gk-text-muted dark:text-gk-dark-text-muted" />
-                }
-              </button>
-
-              {/* Subsections */}
-              {isExpanded && (
-                <div className="ml-6 pl-3 border-l-2 border-gk-border dark:border-gk-dark-border">
-                  {section.subsections.map(sub => {
-                    const subCount = filteredSections
-                      ?.find(s => s.name === section.name)
-                      ?.subsections.find(ss => ss.name === sub.name)
-                      ?.criteria.length || 0
-                    const isSubActive = activeView === 'criteria' &&
-                      activeSection === section.name &&
-                      activeSubsection === sub.name
-
-                    return (
-                      <button
-                        key={sub.name}
-                        onClick={() => navigateTo('criteria', section.name, sub.name)}
-                        className={`nav-item w-full text-left flex items-center gap-2 px-3 py-2 rounded-lg text-xs ${
-                          isSubActive ? 'active' : ''
-                        }`}
-                      >
-                        <span className="flex-1 truncate">{sub.name}</span>
-                        <span className="text-[10px] text-gk-text-muted dark:text-gk-dark-text-muted">{subCount}</span>
-                      </button>
-                    )
-                  })}
-                </div>
-              )}
-            </div>
-          )
-        })}
-
-        {/* Divider */}
-        <div className="mx-3 my-3 border-t border-gk-border dark:border-gk-dark-border" />
-
-        {/* Glossary */}
-        <button
-          onClick={() => navigateTo('glossary')}
-          className={`nav-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm ${
-            activeView === 'glossary' ? 'active' : ''
-          }`}
-        >
-          <BookOpen size={16} className="shrink-0" />
-          <span>Glossary</span>
-          <span className="text-[10px] text-gk-text-muted dark:text-gk-dark-text-muted font-bold bg-gk-surface dark:bg-gk-dark-bg rounded-full px-2 py-0.5 ml-auto">
-            {data.glossary.length}
-          </span>
-        </button>
-      </nav>
+        </nav>
+      </ScrollArea>
 
       {/* Bottom info */}
-      <div className="p-3 border-t border-gk-border dark:border-gk-dark-border bg-gk-surface dark:bg-gk-dark-bg">
-        <p className="text-[10px] text-gk-text-muted dark:text-gk-dark-text-muted text-center leading-relaxed">
+      <div className="p-3 border-t border-border bg-secondary/50">
+        <p className="text-[10px] text-muted-foreground text-center leading-relaxed">
           <strong>139</strong> Criteria · <strong>7</strong> Sections · <strong>6</strong> Categories
           <br />
           Valid: 1 Oct 2026 – 31 Dec 2031

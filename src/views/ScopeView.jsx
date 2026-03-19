@@ -1,5 +1,8 @@
 import React, { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { CheckCircle2, XCircle, Target, ChevronDown, ChevronRight } from 'lucide-react'
+import { Card } from '../components/ui/card'
+import FadeIn from '../components/FadeIn'
 
 /**
  * Render scope content paragraphs with "Label: description" highlighting.
@@ -21,10 +24,10 @@ function renderScopeParagraph(text, idx) {
     if (label.length < 50 && !/\b(is|are|the|this|for|all|has|have|should)\b/i.test(label)) {
       return (
         <div key={idx} className="text-sm leading-relaxed mb-3 flex gap-2">
-          <span className="shrink-0 mt-[7px] w-1.5 h-1.5 rounded-full bg-gk-text-muted/40" />
+          <span className="shrink-0 mt-[7px] w-1.5 h-1.5 rounded-full bg-muted-foreground/40" />
           <p>
-            <strong className="text-gk-text">{label}:</strong>{' '}
-            <span className="italic text-gk-text/85">{rest}</span>
+            <strong className="text-foreground">{label}:</strong>{' '}
+            <span className="italic text-foreground/85">{rest}</span>
           </p>
         </div>
       )
@@ -34,14 +37,14 @@ function renderScopeParagraph(text, idx) {
   // Colon-ending line (list introducer) → italic
   if (trimmed.endsWith(':')) {
     return (
-      <p key={idx} className="text-sm text-gk-text leading-relaxed mb-2 italic font-medium">
+      <p key={idx} className="text-sm text-foreground leading-relaxed mb-2 italic font-medium">
         {trimmed}
       </p>
     )
   }
   
   return (
-    <p key={idx} className="text-sm text-gk-text leading-relaxed mb-2">
+    <p key={idx} className="text-sm text-foreground leading-relaxed mb-2">
       {trimmed}
     </p>
   )
@@ -58,17 +61,19 @@ export default function ScopeView({ data }) {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-br from-gk-green to-gk-green-dark rounded-2xl p-8 text-white">
-        <div className="flex items-center gap-3 mb-3">
-          <Target size={28} />
-          <h1 className="text-2xl font-black">Scope</h1>
-        </div>
-        <p className="text-green-100 text-sm leading-relaxed max-w-2xl">
-          This appendix explains the rules on the certification boundary, including which services and
-          facilities are included or excluded. The scope applies to all establishment categories eligible
-          for Green Key certification.
-        </p>
-      </div>
+      <FadeIn>
+        <Card className="bg-gradient-to-br from-[hsl(var(--gk-green))] to-[hsl(100,59%,33%)] border-0 p-8 text-white overflow-hidden">
+          <div className="flex items-center gap-3 mb-3">
+            <Target size={28} />
+            <h1 className="text-2xl font-black">Scope</h1>
+          </div>
+          <p className="text-green-100 text-sm leading-relaxed max-w-2xl">
+            This appendix explains the rules on the certification boundary, including which services and
+            facilities are included or excluded. The scope applies to all establishment categories eligible
+            for Green Key certification.
+          </p>
+        </Card>
+      </FadeIn>
 
       {/* Scope sections — collapsible */}
       {sections.map((section, i) => {
@@ -77,32 +82,48 @@ export default function ScopeView({ data }) {
         const isCollapsed = collapsedSections[section.heading]
         
         return (
-          <div key={i} className="bg-white dark:bg-gk-dark-surface rounded-xl border border-gk-border dark:border-gk-dark-border overflow-hidden">
-            {/* Collapsible header */}
-            <button
-              onClick={() => toggleSection(section.heading)}
-              className={`w-full text-left px-6 py-4 border-b border-gk-border dark:border-gk-dark-border flex items-center gap-2 transition-colors hover:opacity-90 ${
-                isIncluded ? 'bg-green-50 dark:bg-green-900/20' : isExcluded ? 'bg-red-50 dark:bg-red-900/20' : 'bg-gk-surface dark:bg-gk-dark-bg'
-              }`}
-            >
-              {isIncluded && <CheckCircle2 size={18} className="text-green-600 dark:text-green-400 shrink-0" />}
-              {isExcluded && <XCircle size={18} className="text-red-500 dark:text-red-400 shrink-0" />}
-              <h2 className="text-base font-black text-gk-text dark:text-gk-dark-text flex-1">{section.heading}</h2>
-              <div className="shrink-0 text-gk-text-muted dark:text-gk-dark-text-muted">
-                {isCollapsed
-                  ? <ChevronRight size={18} />
-                  : <ChevronDown size={18} />
-                }
-              </div>
-            </button>
-            
-            {/* Collapsible content */}
-            {!isCollapsed && (
-              <div className="p-6 dark:text-gk-dark-text">
-                {section.content.map((para, j) => renderScopeParagraph(para, j))}
-              </div>
-            )}
-          </div>
+          <FadeIn key={i} delay={0.05 * (i + 1)}>
+            <Card className="overflow-hidden">
+              {/* Collapsible header */}
+              <button
+                onClick={() => toggleSection(section.heading)}
+                className={`w-full text-left px-6 py-4 border-b border-border flex items-center gap-2 transition-colors hover:opacity-90 ${
+                  isIncluded ? 'bg-green-50 dark:bg-green-900/20' : isExcluded ? 'bg-red-50 dark:bg-red-900/20' : 'bg-secondary'
+                }`}
+              >
+                {isIncluded && <CheckCircle2 size={18} className="text-green-600 dark:text-green-400 shrink-0" />}
+                {isExcluded && <XCircle size={18} className="text-red-500 dark:text-red-400 shrink-0" />}
+                <h2 className="text-base font-black text-foreground flex-1">{section.heading}</h2>
+                <motion.div
+                  animate={{ rotate: isCollapsed ? -90 : 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="shrink-0 text-muted-foreground"
+                >
+                  <ChevronDown size={18} />
+                </motion.div>
+              </button>
+              
+              {/* Collapsible content */}
+              <AnimatePresence initial={false}>
+                {!isCollapsed && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{
+                      height: { duration: 0.3, ease: [0.21, 0.47, 0.32, 0.98] },
+                      opacity: { duration: 0.2, delay: 0.05 },
+                    }}
+                    className="overflow-hidden"
+                  >
+                    <div className="p-6">
+                      {section.content.map((para, j) => renderScopeParagraph(para, j))}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </Card>
+          </FadeIn>
         )
       })}
     </div>

@@ -1,15 +1,19 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import data from './data.json'
 import Sidebar from './components/Sidebar'
 import Header from './components/Header'
+import ScrollProgress from './components/ScrollProgress'
 import IntroductionView from './views/IntroductionView'
 import CategoriesView from './views/CategoriesView'
 import ScopeView from './views/ScopeView'
 import CriteriaView from './views/CriteriaView'
 import GlossaryView from './views/GlossaryView'
 import PrintView from './views/PrintView'
-import Tooltip from './components/Tooltip'
-import { Menu, List, LayoutGrid, ChevronsDown, ChevronsUp } from 'lucide-react'
+import { Tooltip } from './components/ui/tooltip'
+import { Badge } from './components/ui/badge'
+import { Button } from './components/ui/button'
+import { Menu, List, LayoutGrid, ChevronsDown, ChevronsUp, X } from 'lucide-react'
 
 const CATEGORY_CODES = ['HH', 'CHP', 'SA', 'CC', 'R', 'A']
 const CATEGORY_LABELS = {
@@ -73,6 +77,17 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js').catch(() => {})
   })
+}
+
+/* ── Page transition variants ── */
+const pageVariants = {
+  initial: { opacity: 0, y: 8 },
+  animate: { opacity: 1, y: 0 },
+  exit: { opacity: 0, y: -8 },
+}
+const pageTransition = {
+  duration: 0.25,
+  ease: [0.21, 0.47, 0.32, 0.98],
 }
 
 export default function App() {
@@ -270,24 +285,23 @@ export default function App() {
   if (isPrintView) {
     return (
       <div className={darkMode ? 'dark' : ''}>
-        <div className="no-print sticky top-0 z-50 bg-white dark:bg-gk-dark-surface border-b border-gk-border dark:border-gk-dark-border px-6 py-3 flex items-center justify-between">
+        <div className="no-print sticky top-0 z-50 bg-card border-b border-border px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img src="/green-key-logo.jpg" alt="Green Key" className="h-8 w-auto" />
-            <span className="text-sm font-bold text-gk-text dark:text-gk-dark-text">Print Preview</span>
+            <span className="text-sm font-bold text-foreground">Print Preview</span>
           </div>
           <div className="flex items-center gap-3">
-            <button
+            <Button
               onClick={() => window.print()}
-              className="px-4 py-2 bg-gk-blue text-white text-sm font-bold rounded-lg hover:bg-gk-blue-dark transition-colors"
             >
               Print / Save as PDF
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="outline"
               onClick={handleClosePrintView}
-              className="px-4 py-2 bg-gk-surface dark:bg-gk-dark-bg text-gk-text dark:text-gk-dark-text text-sm font-semibold rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
             >
               Back to site
-            </button>
+            </Button>
           </div>
         </div>
         <PrintView data={data} />
@@ -296,7 +310,10 @@ export default function App() {
   }
 
   return (
-    <div className="h-screen flex flex-col font-lato bg-gk-surface dark:bg-gk-dark-bg text-gk-text dark:text-gk-dark-text">
+    <div className="h-screen flex flex-col font-lato bg-background text-foreground">
+      {/* Scroll progress bar */}
+      <ScrollProgress containerRef={mainRef} />
+
       {/* Header */}
       <Header
         searchQuery={searchQuery}
@@ -330,71 +347,71 @@ export default function App() {
         {/* Main content */}
         <main
           ref={mainRef}
-          className="flex-1 overflow-y-auto bg-gk-surface dark:bg-gk-dark-bg"
+          className="flex-1 overflow-y-auto bg-background"
         >
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-20">
             {/* Filter bar when on criteria view */}
             {activeView === 'criteria' && (
-              <div className="mb-6 bg-white dark:bg-gk-dark-surface rounded-xl border border-gk-border dark:border-gk-dark-border p-4 no-print">
+              <div className="mb-6 bg-card rounded-xl border border-border p-4 no-print shadow-sm">
                 {/* View toggle: All vs. Section */}
-                <div className="flex items-center gap-2 mb-3 pb-3 border-b border-gk-border dark:border-gk-dark-border">
-                  <span className="text-xs font-bold text-gk-text-muted dark:text-gk-dark-text-muted uppercase tracking-wide mr-1">View:</span>
-                  <button
+                <div className="flex items-center gap-2 mb-3 pb-3 border-b border-border">
+                  <span className="text-xs font-bold text-muted-foreground uppercase tracking-wide mr-1">View:</span>
+                  <Button
+                    variant={showAllCriteria ? 'default' : 'ghost'}
+                    size="sm"
                     onClick={() => {
                       setShowAllCriteria(true)
                       setActiveSection(null)
                       setActiveSubsection(null)
                       history.pushState(null, '', '#all-criteria')
                     }}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                      showAllCriteria
-                        ? 'bg-gk-blue text-white'
-                        : 'bg-gk-surface dark:bg-gk-dark-bg text-gk-text-muted dark:text-gk-dark-text-muted hover:bg-slate-200 dark:hover:bg-slate-700'
-                    }`}
+                    className="gap-1.5"
                   >
                     <List size={13} />
                     All Criteria
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    variant={!showAllCriteria ? 'default' : 'ghost'}
+                    size="sm"
                     onClick={() => {
                       setShowAllCriteria(false)
                       if (!activeSection && data.criteria.sections.length > 0) {
                         setActiveSection(data.criteria.sections[0].name)
                       }
                     }}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                      !showAllCriteria
-                        ? 'bg-gk-blue text-white'
-                        : 'bg-gk-surface dark:bg-gk-dark-bg text-gk-text-muted dark:text-gk-dark-text-muted hover:bg-slate-200 dark:hover:bg-slate-700'
-                    }`}
+                    className="gap-1.5"
                   >
                     <LayoutGrid size={13} />
                     By Section
-                  </button>
+                  </Button>
 
                   {/* Expand/Collapse All */}
                   <div className="ml-auto flex items-center gap-1">
-                    <button
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       onClick={handleExpandAll}
-                      className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-gk-text-muted dark:text-gk-dark-text-muted hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
                       title="Expand all sections"
+                      className="gap-1"
                     >
                       <ChevronsDown size={13} />
                       <span className="hidden sm:inline">Expand All</span>
-                    </button>
-                    <button
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       onClick={handleCollapseAll}
-                      className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-gk-text-muted dark:text-gk-dark-text-muted hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
                       title="Collapse all sections"
+                      className="gap-1"
                     >
                       <ChevronsUp size={13} />
                       <span className="hidden sm:inline">Collapse All</span>
-                    </button>
+                    </Button>
                   </div>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3">
-                  <span className="text-xs font-bold text-gk-text-muted dark:text-gk-dark-text-muted uppercase tracking-wide">Category:</span>
+                  <span className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Category:</span>
                   <div className="flex flex-wrap gap-2">
                     {CATEGORY_CODES.map(cat => (
                       <Tooltip key={cat} content={CATEGORY_LABELS[cat]} position="bottom">
@@ -402,8 +419,8 @@ export default function App() {
                           onClick={() => toggleCategory(cat)}
                           className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${
                             categoryFilter.includes(cat)
-                              ? 'bg-gk-blue text-white'
-                              : 'badge-category hover:bg-gk-blue-light dark:hover:bg-slate-700'
+                              ? 'bg-[hsl(var(--gk-blue))] text-white'
+                              : 'bg-secondary text-secondary-foreground border border-border hover:bg-accent/20'
                           }`}
                         >
                           {cat}
@@ -411,16 +428,16 @@ export default function App() {
                       </Tooltip>
                     ))}
                   </div>
-                  <div className="h-5 w-px bg-gk-border dark:bg-gk-dark-border mx-1 hidden sm:block" />
-                  <span className="text-xs font-bold text-gk-text-muted dark:text-gk-dark-text-muted uppercase tracking-wide">Type:</span>
+                  <div className="h-5 w-px bg-border mx-1 hidden sm:block" />
+                  <span className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Type:</span>
                   <div className="flex gap-2">
                     <Tooltip content="Mandatory criteria — must be met for certification" position="bottom">
                       <button
                         onClick={() => setTypeFilter(typeFilter === 'imperative' ? null : 'imperative')}
                         className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${
                           typeFilter === 'imperative'
-                            ? 'badge-imperative'
-                            : 'badge-category hover:bg-gk-blue-light dark:hover:bg-slate-700'
+                            ? 'bg-[hsl(var(--gk-blue))] text-white'
+                            : 'bg-secondary text-secondary-foreground border border-border hover:bg-accent/20'
                         }`}
                       >
                         Imperative (I)
@@ -431,8 +448,8 @@ export default function App() {
                         onClick={() => setTypeFilter(typeFilter === 'guideline' ? null : 'guideline')}
                         className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${
                           typeFilter === 'guideline'
-                            ? 'badge-guideline'
-                            : 'badge-category hover:bg-gk-green-light dark:hover:bg-slate-700'
+                            ? 'bg-[hsl(var(--gk-green))] text-white'
+                            : 'bg-secondary text-secondary-foreground border border-border hover:bg-accent/20'
                         }`}
                       >
                         Guideline (G)
@@ -441,14 +458,16 @@ export default function App() {
                   </div>
                   {(categoryFilter.length > 0 || typeFilter || searchQuery) && (
                     <>
-                      <div className="h-5 w-px bg-gk-border dark:bg-gk-dark-border mx-1 hidden sm:block" />
-                      <button
+                      <div className="h-5 w-px bg-border mx-1 hidden sm:block" />
+                      <Button
+                        variant="link"
+                        size="sm"
                         onClick={clearFilters}
-                        className="text-xs text-gk-blue hover:text-gk-blue-dark font-bold"
+                        className="text-xs"
                       >
                         Clear all filters
-                      </button>
-                      <span className="text-xs text-gk-text-muted dark:text-gk-dark-text-muted ml-auto font-semibold">
+                      </Button>
+                      <span className="text-xs text-muted-foreground ml-auto font-semibold">
                         {totalFilteredCriteria} of 139 criteria
                       </span>
                     </>
@@ -457,51 +476,98 @@ export default function App() {
               </div>
             )}
 
-            {/* Views */}
-            {activeView === 'introduction' && (
-              <IntroductionView data={data} navigateTo={navigateTo} />
-            )}
-            {activeView === 'categories' && (
-              <CategoriesView data={data} />
-            )}
-            {activeView === 'scope' && (
-              <ScopeView data={data} />
-            )}
-            {activeView === 'criteria' && (
-              <CriteriaView
-                sections={filteredSections}
-                activeSection={showAllCriteria ? null : activeSection}
-                activeSubsection={activeSubsection}
-                searchQuery={searchQuery}
-                glossary={data.glossary}
-                navigateTo={navigateTo}
-                showAllCriteria={showAllCriteria}
-                expandAllSignal={expandAllSignal}
-                highlightCriterion={highlightCriterion}
-                navigateToCriterion={navigateToCriterion}
-              />
-            )}
-            {activeView === 'glossary' && (
-              <GlossaryView
-                terms={filteredGlossary}
-                searchQuery={searchQuery}
-                highlightTerm={highlightGlossaryTerm}
-              />
-            )}
+            {/* Views with AnimatePresence for page transitions */}
+            <AnimatePresence mode="wait">
+              {activeView === 'introduction' && (
+                <motion.div
+                  key="introduction"
+                  variants={pageVariants}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                  transition={pageTransition}
+                >
+                  <IntroductionView data={data} navigateTo={navigateTo} />
+                </motion.div>
+              )}
+              {activeView === 'categories' && (
+                <motion.div
+                  key="categories"
+                  variants={pageVariants}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                  transition={pageTransition}
+                >
+                  <CategoriesView data={data} />
+                </motion.div>
+              )}
+              {activeView === 'scope' && (
+                <motion.div
+                  key="scope"
+                  variants={pageVariants}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                  transition={pageTransition}
+                >
+                  <ScopeView data={data} />
+                </motion.div>
+              )}
+              {activeView === 'criteria' && (
+                <motion.div
+                  key="criteria"
+                  variants={pageVariants}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                  transition={pageTransition}
+                >
+                  <CriteriaView
+                    sections={filteredSections}
+                    activeSection={showAllCriteria ? null : activeSection}
+                    activeSubsection={activeSubsection}
+                    searchQuery={searchQuery}
+                    glossary={data.glossary}
+                    navigateTo={navigateTo}
+                    showAllCriteria={showAllCriteria}
+                    expandAllSignal={expandAllSignal}
+                    highlightCriterion={highlightCriterion}
+                    navigateToCriterion={navigateToCriterion}
+                  />
+                </motion.div>
+              )}
+              {activeView === 'glossary' && (
+                <motion.div
+                  key="glossary"
+                  variants={pageVariants}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                  transition={pageTransition}
+                >
+                  <GlossaryView
+                    terms={filteredGlossary}
+                    searchQuery={searchQuery}
+                    highlightTerm={highlightGlossaryTerm}
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           {/* Footer */}
-          <footer className="border-t border-gk-border dark:border-gk-dark-border bg-white dark:bg-gk-dark-surface py-6 px-8 text-center no-print">
-            <p className="text-xs text-gk-text-muted dark:text-gk-dark-text-muted">
+          <footer className="border-t border-border bg-card py-6 px-8 text-center no-print">
+            <p className="text-xs text-muted-foreground">
               Green Key Criteria and Explanatory Notes — 1 October 2026 – 31 December 2031
             </p>
-            <p className="text-xs text-gk-text-muted dark:text-gk-dark-text-muted mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               © Foundation for Environmental Education (FEE). All rights reserved.
             </p>
-            <p className="text-xs text-gk-text-muted dark:text-gk-dark-text-muted mt-1 italic">
+            <p className="text-xs text-muted-foreground mt-1 italic">
               Translations are provided for convenience only. The official English text is the authoritative version.
             </p>
-            <p className="text-xs text-slate-400 mt-2">
+            <p className="text-xs text-muted-foreground/60 mt-2">
               Created by Caio Merino
             </p>
           </footer>

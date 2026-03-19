@@ -1,5 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import CriterionCard from '../components/CriterionCard'
+import { Card } from '../components/ui/card'
+import { Badge } from '../components/ui/badge'
+import { Separator } from '../components/ui/separator'
+import { Button } from '../components/ui/button'
 import {
   Shield, Users, Droplets, Zap, Trash2, ShoppingBag, TreePine, FileText,
   ChevronDown, ChevronRight
@@ -33,6 +38,21 @@ const SECTION_SHORT_NAMES = {
   'WASTE': 'Waste',
   'PROCUREMENT': 'Procurement',
   'LIVING ENVIRONMENT': 'Living Environment',
+}
+
+const staggerContainer = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.05,
+    },
+  },
+}
+
+const staggerItem = {
+  hidden: { opacity: 0, y: 12 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: [0.21, 0.47, 0.32, 0.98] } },
 }
 
 export default function CriteriaView({
@@ -83,15 +103,15 @@ export default function CriteriaView({
 
   if (sectionsToShow.length === 0) {
     return (
-      <div className="text-center py-16">
-        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gk-surface dark:bg-gk-dark-surface flex items-center justify-center">
-          <FileText size={24} className="text-gk-text-muted dark:text-gk-dark-text-muted" />
+      <Card className="text-center py-16">
+        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-secondary flex items-center justify-center">
+          <FileText size={24} className="text-muted-foreground" />
         </div>
-        <h3 className="text-lg font-bold text-gk-text dark:text-gk-dark-text mb-2">No criteria found</h3>
-        <p className="text-sm text-gk-text-muted dark:text-gk-dark-text-muted">
+        <h3 className="text-lg font-bold text-foreground mb-2">No criteria found</h3>
+        <p className="text-sm text-muted-foreground">
           Try adjusting your search or filters to see results.
         </p>
-      </div>
+      </Card>
     )
   }
 
@@ -105,7 +125,7 @@ export default function CriteriaView({
   return (
     <div className="space-y-6">
       {showAllCriteria && !activeSection && (
-        <div className="bg-gradient-to-br from-gk-blue to-gk-blue-dark rounded-2xl p-6 sm:p-8 text-white">
+        <Card className="bg-gradient-to-br from-[hsl(var(--gk-blue))] to-[hsl(211,100%,30%)] border-0 p-6 sm:p-8 text-white overflow-hidden">
           <h2 className="text-2xl font-black mb-2">All Criteria</h2>
           <p className="text-blue-100 text-sm leading-relaxed max-w-2xl mb-3">
             Complete listing of all Green Key criteria across every section. Use the filters above to narrow by category or type.
@@ -121,7 +141,7 @@ export default function CriteriaView({
               {allGuideline} guideline
             </span>
           </div>
-        </div>
+        </Card>
       )}
 
       {sectionsToShow.map(section => {
@@ -144,7 +164,7 @@ export default function CriteriaView({
           <div key={section.name}>
             <button
               onClick={() => toggleSection(section.name)}
-              className={`w-full text-left bg-gradient-to-r ${gradient} rounded-2xl p-5 sm:p-6 mb-4 text-white transition-all hover:shadow-lg group`}
+              className={`w-full text-left bg-gradient-to-r ${gradient} rounded-xl p-5 sm:p-6 mb-4 text-white transition-all hover:shadow-lg group`}
             >
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center">
@@ -156,12 +176,13 @@ export default function CriteriaView({
                     <p className="text-xs opacity-80 mt-0.5 italic">{section.subsection_summary}</p>
                   )}
                 </div>
-                <div className="shrink-0 w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center transition-transform">
-                  {isSectionCollapsed
-                    ? <ChevronRight size={18} />
-                    : <ChevronDown size={18} />
-                  }
-                </div>
+                <motion.div
+                  animate={{ rotate: isSectionCollapsed ? -90 : 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="shrink-0 w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center"
+                >
+                  <ChevronDown size={18} />
+                </motion.div>
               </div>
               <div className="flex flex-wrap gap-2 sm:gap-4 mt-3 text-xs">
                 <span className="bg-white/20 rounded-full px-3 py-1 font-bold">
@@ -176,64 +197,86 @@ export default function CriteriaView({
               </div>
             </button>
 
-            {!isSectionCollapsed && (
-              <div className="space-y-6 mb-8">
-                {subsectionsToShow.map(subsection => {
-                  const subKey = `${section.name}::${subsection.name}`
-                  const isSubCollapsed = collapsedSubsections[subKey]
+            <AnimatePresence initial={false}>
+              {!isSectionCollapsed && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{
+                    height: { duration: 0.35, ease: [0.21, 0.47, 0.32, 0.98] },
+                    opacity: { duration: 0.25, delay: 0.05 },
+                  }}
+                  className="overflow-hidden"
+                >
+                  <div className="space-y-6 mb-8">
+                    {subsectionsToShow.map(subsection => {
+                      const subKey = `${section.name}::${subsection.name}`
+                      const isSubCollapsed = collapsedSubsections[subKey]
 
-                  return (
-                    <div key={subsection.name}>
-                      <button
-                        onClick={() => toggleSubsection(section.name, subsection.name)}
-                        className="w-full text-left flex items-center gap-2 mb-3 pb-2 border-b-2 border-gk-border dark:border-gk-dark-border hover:border-gk-blue/40 transition-colors group"
-                      >
-                        <div className="shrink-0 w-6 h-6 rounded flex items-center justify-center text-gk-text-muted dark:text-gk-dark-text-muted group-hover:text-gk-blue transition-colors">
-                          {isSubCollapsed
-                            ? <ChevronRight size={16} />
-                            : <ChevronDown size={16} />
-                          }
-                        </div>
-                        <h3 className="text-base font-black text-gk-text dark:text-gk-dark-text flex-1">{subsection.name}</h3>
-                        <span className="text-xs text-gk-text-muted dark:text-gk-dark-text-muted bg-gk-surface dark:bg-gk-dark-bg rounded-full px-2.5 py-0.5 font-semibold shrink-0">
-                          {subsection.criteria.length} {subsection.criteria.length === 1 ? 'criterion' : 'criteria'}
-                        </span>
-                      </button>
-
-                      {!isSubCollapsed && (
-                        <div className="space-y-3 ml-0 sm:ml-2">
-                          {subsection.criteria.map(criterion => (
-                            <div
-                              key={criterion.number}
-                              ref={highlightCriterion === criterion.number ? highlightRef : null}
+                      return (
+                        <div key={subsection.name}>
+                          <button
+                            onClick={() => toggleSubsection(section.name, subsection.name)}
+                            className="w-full text-left flex items-center gap-2 mb-3 pb-2 border-b-2 border-border hover:border-primary/40 transition-colors group"
+                          >
+                            <motion.div
+                              animate={{ rotate: isSubCollapsed ? -90 : 0 }}
+                              transition={{ duration: 0.2 }}
+                              className="shrink-0 w-6 h-6 rounded flex items-center justify-center text-muted-foreground group-hover:text-primary transition-colors"
                             >
-                              <CriterionCard
-                                criterion={criterion}
-                                searchQuery={searchQuery}
-                                autoExpand={highlightCriterion === criterion.number}
-                                navigateToCriterion={navigateToCriterion}
-                              />
-                            </div>
-                          ))}
+                              <ChevronDown size={16} />
+                            </motion.div>
+                            <h3 className="text-base font-black text-foreground flex-1">{subsection.name}</h3>
+                            <Badge variant="outline" className="text-[10px] px-2.5 py-0.5 rounded-full">
+                              {subsection.criteria.length} {subsection.criteria.length === 1 ? 'criterion' : 'criteria'}
+                            </Badge>
+                          </button>
+
+                          <AnimatePresence initial={false}>
+                            {!isSubCollapsed && (
+                              <motion.div
+                                variants={staggerContainer}
+                                initial="hidden"
+                                animate="show"
+                                className="space-y-3 ml-0 sm:ml-2"
+                              >
+                                {subsection.criteria.map(criterion => (
+                                  <motion.div
+                                    key={criterion.number}
+                                    variants={staggerItem}
+                                    ref={highlightCriterion === criterion.number ? highlightRef : null}
+                                  >
+                                    <CriterionCard
+                                      criterion={criterion}
+                                      searchQuery={searchQuery}
+                                      autoExpand={highlightCriterion === criterion.number}
+                                      navigateToCriterion={navigateToCriterion}
+                                    />
+                                  </motion.div>
+                                ))}
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
                         </div>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
-            )}
+                      )
+                    })}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         )
       })}
 
       {activeSection && !showAllCriteria && (
         <div className="text-center pt-4">
-          <button
+          <Button
+            variant="link"
             onClick={() => navigateTo('criteria', null, null)}
-            className="text-sm text-gk-blue hover:text-gk-blue-dark font-bold"
           >
             ← View all criteria sections
-          </button>
+          </Button>
         </div>
       )}
     </div>

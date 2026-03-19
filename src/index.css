@@ -2,10 +2,68 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================
+   shadcn-compatible CSS Variable System
+   ============================================ */
+
+@layer base {
+  :root {
+    --background: 210 20% 98%;
+    --foreground: 215 25% 15%;
+    --card: 0 0% 100%;
+    --card-foreground: 215 25% 15%;
+    --primary: 170 80% 38%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 20% 96%;
+    --secondary-foreground: 215 25% 15%;
+    --muted: 210 20% 96%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 100 59% 44%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 170 80% 38%;
+    --radius: 0.75rem;
+    /* Brand-specific */
+    --gk-blue: 211 100% 40%;
+    --gk-green: 100 59% 44%;
+    --gk-teal: 170 80% 38%;
+  }
+
+  .dark {
+    --background: 222 47% 11%;
+    --foreground: 214 32% 91%;
+    --card: 217 33% 17%;
+    --card-foreground: 214 32% 91%;
+    --primary: 170 80% 38%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 214 32% 91%;
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 100 59% 44%;
+    --accent-foreground: 0 0% 100%;
+    --border: 217 24% 27%;
+    --input: 217 24% 27%;
+    --ring: 170 80% 38%;
+  }
+}
+
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
 }
 
 html {
@@ -14,17 +72,8 @@ html {
 
 body {
   font-family: 'Lato', Arial, sans-serif;
-  color: #1E293B;
-  background-color: #F8FAFB;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
-
-/* Dark mode body */
-.dark body,
-html.dark body {
-  color: #E2E8F0;
-  background-color: #0F172A;
 }
 
 /* Scrollbar styling */
@@ -35,22 +84,16 @@ html.dark body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #CBD5E1;
+  background: hsl(var(--border));
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #94A3B8;
+  background: hsl(var(--muted-foreground));
 }
 
-/* Dark scrollbar */
-.dark ::-webkit-scrollbar-thumb {
-  background: #475569;
-}
-.dark ::-webkit-scrollbar-thumb:hover {
-  background: #64748B;
-}
-
-/* Google Translate widget styling override */
+/* ============================================
+   Google Translate widget styling override
+   ============================================ */
 .goog-te-banner-frame {
   display: none !important;
 }
@@ -61,53 +104,14 @@ body {
   font-family: 'Lato', Arial, sans-serif !important;
 }
 .goog-te-gadget-simple {
-  border: 1px solid #E2E8F0 !important;
+  border: 1px solid hsl(var(--border)) !important;
   border-radius: 8px !important;
   padding: 4px 10px !important;
-  background: white !important;
+  background: hsl(var(--card)) !important;
   font-size: 13px !important;
 }
 .goog-te-gadget-simple span {
-  color: #1E293B !important;
-}
-
-/* Dark mode Google Translate */
-.dark .goog-te-gadget-simple {
-  border-color: #334155 !important;
-  background: #1E293B !important;
-}
-.dark .goog-te-gadget-simple span {
-  color: #E2E8F0 !important;
-}
-
-/* ============================================
-   TOOLTIP
-   ============================================ */
-.tooltip-bubble {
-  position: fixed;
-  z-index: 9999;
-  background: #1E293B;
-  color: white;
-  font-size: 12px;
-  font-weight: 500;
-  line-height: 1.4;
-  padding: 6px 12px;
-  border-radius: 8px;
-  max-width: 260px;
-  pointer-events: none;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  animation: tooltip-in 0.15s ease-out;
-}
-
-.dark .tooltip-bubble {
-  background: #E2E8F0;
-  color: #0F172A;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-}
-
-@keyframes tooltip-in {
-  from { opacity: 0; transform: translateY(4px); }
-  to   { opacity: 1; transform: translateY(0); }
+  color: hsl(var(--foreground)) !important;
 }
 
 /* ============================================
@@ -120,14 +124,8 @@ body {
   box-shadow: 0 2px 8px rgba(0, 102, 204, 0.08);
 }
 
-/* Smooth expand/collapse */
-.expandable-content {
-  overflow: hidden;
-  transition: max-height 0.3s ease, opacity 0.3s ease;
-}
-
 /* ============================================
-   BADGES
+   BADGES (backward compat)
    ============================================ */
 .badge-imperative {
   background-color: #0066CC;
@@ -138,21 +136,14 @@ body {
   color: white;
 }
 .badge-category {
-  background-color: #F1F5F9;
-  color: #475569;
-  border: 1px solid #E2E8F0;
+  background-color: hsl(var(--secondary));
+  color: hsl(var(--secondary-foreground));
+  border: 1px solid hsl(var(--border));
 }
 .badge-category.active {
   background-color: #E6F0FA;
   color: #0066CC;
   border-color: #0066CC;
-}
-
-/* Dark mode badges */
-.dark .badge-category {
-  background-color: #1E293B;
-  color: #94A3B8;
-  border-color: #334155;
 }
 .dark .badge-category.active {
   background-color: rgba(0, 102, 204, 0.15);
@@ -165,25 +156,24 @@ body {
    ============================================ */
 .nav-item {
   transition: all 0.15s ease;
+  color: hsl(var(--foreground));
 }
 .nav-item:hover {
-  background-color: #F1F5F9;
+  background-color: hsl(var(--accent) / 0.15);
 }
 .nav-item.active {
-  background-color: #E6F0FA;
-  color: #0066CC;
+  background-color: hsl(var(--primary) / 0.1);
+  color: hsl(var(--primary));
   font-weight: 700;
-  border-left: 3px solid #0066CC;
+  border-left: 3px solid hsl(var(--primary));
 }
-
-/* Dark mode nav items */
 .dark .nav-item:hover {
-  background-color: #334155;
+  background-color: hsl(var(--accent) / 0.1);
 }
 .dark .nav-item.active {
-  background-color: rgba(0, 102, 204, 0.15);
-  color: #60A5FA;
-  border-left-color: #60A5FA;
+  background-color: hsl(var(--primary) / 0.15);
+  color: hsl(170 80% 50%);
+  border-left-color: hsl(170 80% 50%);
 }
 
 /* ============================================
@@ -194,7 +184,6 @@ mark {
   border-radius: 2px;
   padding: 0 2px;
 }
-
 .dark mark {
   background-color: #854D0E;
   color: #FEF3C7;
@@ -227,7 +216,6 @@ mark {
   .print-break {
     page-break-before: always;
   }
-  /* Force light mode for print */
   body, html {
     color: #1E293B !important;
     background: white !important;
