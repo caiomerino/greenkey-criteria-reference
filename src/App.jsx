@@ -501,14 +501,9 @@ export default function App() {
             <p className="text-xs text-gk-text-muted dark:text-gk-dark-text-muted mt-1 italic">
               Translations are provided for convenience only. The official English text is the authoritative version.
             </p>
-            <a
-              href="https://www.perplexity.ai/computer"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs text-slate-400 hover:text-slate-500 mt-2 inline-block"
-            >
-              Created with Perplexity Computer
-            </a>
+            <p className="text-xs text-slate-400 mt-2">
+              Created by Caio Merino
+            </p>
           </footer>
         </main>
       </div>
