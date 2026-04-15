@@ -585,13 +585,16 @@ export default function App() {
               Green Key Criteria and Explanatory Notes — 1 October 2026 – 31 December 2031
             </p>
             <p className="text-xs text-muted-foreground mt-1">
-              © Foundation for Environmental Education (FEE). All rights reserved.
+              Based on criteria published by the Foundation for Environmental Education (FEE).
+            </p>
+            <p className="text-xs text-muted-foreground mt-1 italic">
+              This is an independent reference resource — not an official FEE publication.
             </p>
             <p className="text-xs text-muted-foreground mt-1 italic">
               Translations are provided for convenience only. The official English text is the authoritative version.
             </p>
             <p className="text-xs text-muted-foreground/60 mt-2">
-              Created by Caio Merino
+              © {new Date().getFullYear()} Caio Merino. All rights reserved.
             </p>
           </footer>
         </main>

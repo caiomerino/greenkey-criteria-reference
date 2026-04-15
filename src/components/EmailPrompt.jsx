@@ -84,95 +84,110 @@ export default function EmailPrompt() {
   return (
     <AnimatePresence>
       {!dismissed && (
-        <motion.div
-          initial={{ y: 100, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: 100, opacity: 0 }}
-          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-          className="fixed bottom-4 right-4 left-4 sm:left-auto sm:w-[420px] z-[60]"
-        >
-          <div className="bg-card border border-border rounded-2xl shadow-2xl overflow-hidden">
-            {/* Close button */}
-            <button
-              onClick={handleDismiss}
-              className="absolute top-3 right-3 p-1.5 rounded-full hover:bg-secondary/80 text-muted-foreground hover:text-foreground transition-colors z-10"
-              aria-label="Close"
-            >
-              <X size={16} />
-            </button>
+        <>
+          {/* Backdrop overlay */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm"
+            onClick={handleDismiss}
+          />
 
-            {success ? (
-              /* ── Success state ── */
-              <div className="p-6 text-center">
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ type: 'spring', stiffness: 400, damping: 15, delay: 0.1 }}
+          {/* Centred modal */}
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.9, opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 350, damping: 28 }}
+            className="fixed inset-0 z-[61] flex items-center justify-center p-4 pointer-events-none"
+          >
+            <div className="w-full max-w-md pointer-events-auto">
+              <div className="bg-card border border-border rounded-2xl shadow-2xl overflow-hidden relative">
+                {/* Close button */}
+                <button
+                  onClick={handleDismiss}
+                  className="absolute top-3 right-3 p-1.5 rounded-full hover:bg-secondary/80 text-muted-foreground hover:text-foreground transition-colors z-10"
+                  aria-label="Close"
                 >
-                  <CheckCircle2 size={40} className="mx-auto text-[hsl(var(--gk-green))]" />
-                </motion.div>
-                <p className="mt-3 text-sm font-bold text-foreground">Thank you — that means a lot.</p>
-                <p className="mt-1 text-xs text-muted-foreground">Enjoy the full reference.</p>
-              </div>
-            ) : (
-              /* ── Prompt state ── */
-              <div className="p-5 sm:p-6">
-                {/* Accent bar */}
-                <div className="flex items-start gap-3 mb-3">
-                  <div className="shrink-0 w-9 h-9 rounded-full bg-[hsl(var(--gk-green))]/10 flex items-center justify-center">
-                    <Heart size={18} className="text-[hsl(var(--gk-green))]" />
+                  <X size={16} />
+                </button>
+
+                {success ? (
+                  /* ── Success state ── */
+                  <div className="p-8 text-center">
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: 'spring', stiffness: 400, damping: 15, delay: 0.1 }}
+                    >
+                      <CheckCircle2 size={48} className="mx-auto text-[hsl(var(--gk-green))]" />
+                    </motion.div>
+                    <p className="mt-4 text-base font-bold text-foreground">Thank you — that means a lot.</p>
+                    <p className="mt-1 text-sm text-muted-foreground">Enjoy the full reference.</p>
                   </div>
-                  <div>
-                    <p className="text-sm font-bold text-foreground leading-snug">
-                      A quick word from the author
+                ) : (
+                  /* ── Prompt state ── */
+                  <div className="p-6 sm:p-8">
+                    {/* Header */}
+                    <div className="flex items-start gap-3 mb-4">
+                      <div className="shrink-0 w-10 h-10 rounded-full bg-[hsl(var(--gk-green))]/10 flex items-center justify-center">
+                        <Heart size={20} className="text-[hsl(var(--gk-green))]" />
+                      </div>
+                      <div>
+                        <p className="text-base font-bold text-foreground leading-snug">
+                          A quick word from the author
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3 text-sm text-muted-foreground leading-relaxed">
+                      <p>
+                        This resource is an independent project — I built it on my own time
+                        because the official criteria documents are, frankly, not the easiest
+                        to work with. No one paid me to make this.
+                      </p>
+                      <p>
+                        If you're finding it useful, I'd love to know who's out there using it.
+                        Drop your email below and you'll be the first to hear about updates.
+                      </p>
+                    </div>
+
+                    <form onSubmit={handleSubmit} className="mt-5 flex flex-col sm:flex-row gap-2">
+                      <div className="relative flex-1">
+                        <Mail size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                        <input
+                          type="email"
+                          required
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          placeholder="your@email.com"
+                          className="w-full pl-9 pr-3 py-2.5 text-sm rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-[hsl(var(--gk-green))]/40 focus:border-[hsl(var(--gk-green))] transition-all"
+                        />
+                      </div>
+                      <button
+                        type="submit"
+                        disabled={submitting}
+                        className="shrink-0 px-5 py-2.5 bg-[hsl(var(--gk-green))] hover:bg-[hsl(var(--gk-green))]/90 text-white text-sm font-semibold rounded-lg transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
+                      >
+                        {submitting ? (
+                          <Loader2 size={15} className="animate-spin" />
+                        ) : (
+                          'Send'
+                        )}
+                      </button>
+                    </form>
+
+                    <p className="mt-3 text-[11px] text-muted-foreground/60 leading-relaxed">
+                      No spam, no marketing. Just updates to this resource.
                     </p>
                   </div>
-                </div>
-
-                <div className="space-y-2.5 text-[13px] text-muted-foreground leading-relaxed">
-                  <p>
-                    This resource is an independent project — I built it on my own time
-                    because the official criteria documents are, frankly, not the easiest
-                    to work with. No one paid me to make this.
-                  </p>
-                  <p>
-                    If you're finding it useful, I'd love to know who's out there using it.
-                    Drop your email below and you'll be the first to hear about updates.
-                  </p>
-                </div>
-
-                <form onSubmit={handleSubmit} className="mt-4 flex gap-2">
-                  <div className="relative flex-1">
-                    <Mail size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                    <input
-                      type="email"
-                      required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="your@email.com"
-                      className="w-full pl-9 pr-3 py-2.5 text-sm rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-[hsl(var(--gk-green))]/40 focus:border-[hsl(var(--gk-green))] transition-all"
-                    />
-                  </div>
-                  <button
-                    type="submit"
-                    disabled={submitting}
-                    className="shrink-0 px-4 py-2.5 bg-[hsl(var(--gk-green))] hover:bg-[hsl(var(--gk-green))]/90 text-white text-sm font-semibold rounded-lg transition-colors disabled:opacity-60 flex items-center gap-2"
-                  >
-                    {submitting ? (
-                      <Loader2 size={15} className="animate-spin" />
-                    ) : (
-                      'Send'
-                    )}
-                  </button>
-                </form>
-
-                <p className="mt-2.5 text-[11px] text-muted-foreground/60 leading-relaxed">
-                  No spam, no marketing. Just updates to this resource.
-                </p>
+                )}
               </div>
-            )}
-          </div>
-        </motion.div>
+            </div>
+          </motion.div>
+        </>
       )}
     </AnimatePresence>
   )
