@@ -276,6 +276,10 @@ function cleanListItem(text) {
   return t
 }
 
+function trackEvent(eventName, params = {}) {
+  if (typeof gtag === 'function') gtag('event', eventName, params)
+}
+
 export default function CriterionCard({ criterion, searchQuery, autoExpand, navigateToCriterion }) {
   const [expanded, setExpanded] = useState(false)
   
@@ -286,6 +290,13 @@ export default function CriterionCard({ criterion, searchQuery, autoExpand, navi
   
   const { number, statement, type, categories, has_national_note, explanatory_notes } = criterion
   
+  const handleToggle = () => {
+    if (!expanded) {
+      trackEvent('criterion_expand', { criterion_number: number })
+    }
+    setExpanded(!expanded)
+  }
+  
   return (
     <Card className={`overflow-hidden transition-all duration-200 hover:shadow-md ${
       autoExpand
@@ -293,7 +304,7 @@ export default function CriterionCard({ criterion, searchQuery, autoExpand, navi
         : ''
     }`}>
       <button
-        onClick={() => setExpanded(!expanded)}
+        onClick={handleToggle}
         className="w-full text-left p-4 sm:p-5 flex items-start gap-3 hover:bg-accent/10 transition-colors"
       >
         <div className={`shrink-0 w-12 h-12 rounded-lg flex items-center justify-center text-white font-bold text-sm ${

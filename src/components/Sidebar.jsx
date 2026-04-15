@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   BookOpen, Shield, Layers, FileText, ChevronDown, ChevronRight,
   Droplets, Zap, Trash2, ShoppingBag, TreePine, Users, X,
-  Home, List, Target
+  Home, List, Target, Lock
 } from 'lucide-react'
 import { ScrollArea } from './ui/scroll-area'
 import { Separator } from './ui/separator'
@@ -30,7 +30,7 @@ const SECTION_SHORT_NAMES = {
   'LIVING ENVIRONMENT': 'Living Environment',
 }
 
-export default function Sidebar({ data, activeView, activeSection, activeSubsection, navigateTo, isOpen, onClose, filteredSections, showAllCriteria }) {
+export default function Sidebar({ data, activeView, activeSection, activeSubsection, navigateTo, isOpen, onClose, filteredSections, showAllCriteria, isUnlocked }) {
   const [expandedSections, setExpandedSections] = useState({})
 
   const toggleSection = (name) => {
@@ -117,10 +117,11 @@ export default function Sidebar({ data, activeView, activeSection, activeSubsect
             onClick={() => navigateTo('criteria', null, null)}
             className={`nav-item w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm mb-0.5 ${
               activeView === 'criteria' && showAllCriteria ? 'active' : ''
-            }`}
+            } ${!isUnlocked ? 'opacity-50' : ''}`}
           >
             <List size={15} className="shrink-0 text-gk-blue" />
             <span className="flex-1">All Criteria</span>
+            {!isUnlocked && <Lock size={12} className="shrink-0 text-muted-foreground" />}
             <Badge variant="outline" className="text-[10px] px-2 py-0.5 rounded-full">
               {totalCriteria}
             </Badge>
@@ -143,10 +144,11 @@ export default function Sidebar({ data, activeView, activeSection, activeSubsect
                   }}
                   className={`nav-item w-full text-left flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm ${
                     isActive && !activeSubsection ? 'active' : ''
-                  }`}
+                  } ${!isUnlocked ? 'opacity-50' : ''}`}
                 >
                   <Icon size={15} className="shrink-0 text-gk-green-web" />
                   <span className="flex-1 truncate">{shortName}</span>
+                  {!isUnlocked && <Lock size={11} className="shrink-0 text-muted-foreground" />}
                   <Badge variant="outline" className="text-[10px] px-2 py-0.5 rounded-full">
                     {count}
                   </Badge>

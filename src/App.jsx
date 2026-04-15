@@ -10,10 +10,18 @@ import ScopeView from './views/ScopeView'
 import CriteriaView from './views/CriteriaView'
 import GlossaryView from './views/GlossaryView'
 import PrintView from './views/PrintView'
+import EmailGate from './components/EmailGate'
 import { Tooltip } from './components/ui/tooltip'
 import { Badge } from './components/ui/badge'
 import { Button } from './components/ui/button'
 import { Menu, List, LayoutGrid, ChevronsDown, ChevronsUp, X } from 'lucide-react'
+
+/* ── Analytics ── */
+function trackEvent(eventName, params = {}) {
+  if (typeof gtag === 'function') {
+    gtag('event', eventName, params)
+  }
+}
 
 const CATEGORY_CODES = ['HH', 'CHP', 'SA', 'CC', 'R', 'A']
 const CATEGORY_LABELS = {
@@ -104,6 +112,7 @@ export default function App() {
   const [expandAllSignal, setExpandAllSignal] = useState(0)   // positive = expand, negative = collapse
   const [highlightCriterion, setHighlightCriterion] = useState(null) // criterion number to auto-expand
   const [highlightGlossaryTerm, setHighlightGlossaryTerm] = useState(null)
+  const [isUnlocked, setIsUnlocked] = useState(() => !!localStorage.getItem('gk-criteria-email'))
   const mainRef = useRef(null)
 
   // Dark mode effect
@@ -111,6 +120,15 @@ export default function App() {
     document.documentElement.classList.toggle('dark', darkMode)
     localStorage.setItem('gk-dark-mode', darkMode)
   }, [darkMode])
+
+  // Debounced search tracking
+  useEffect(() => {
+    if (!searchQuery) return
+    const timer = setTimeout(() => {
+      trackEvent('search', { search_term: searchQuery })
+    }, 1000)
+    return () => clearTimeout(timer)
+  }, [searchQuery])
 
   // ── Hash routing: initial load + listen for changes ──
   useEffect(() => {
@@ -167,6 +185,8 @@ export default function App() {
     } else if (view === 'criteria' && section) {
       setShowAllCriteria(false)
     }
+    // Track page view
+    trackEvent('page_view', { page_title: view, ...(section ? { section } : {}) })
     // Update hash without triggering the listener again
     const newHash = buildHash(view, section, subsection, showAll)
     if (window.location.hash !== newHash) {
@@ -257,6 +277,7 @@ export default function App() {
 
   // Print handler
   const handlePrint = useCallback(() => {
+    trackEvent('print_view')
     setIsPrintView(true)
   }, [])
 
@@ -321,7 +342,10 @@ export default function App() {
         onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
         onPrint={handlePrint}
         darkMode={darkMode}
-        setDarkMode={setDarkMode}
+        setDarkMode={(val) => {
+          trackEvent('toggle_dark_mode', { enabled: val })
+          setDarkMode(val)
+        }}
       />
 
       <div className="flex flex-1 overflow-hidden">
@@ -342,6 +366,7 @@ export default function App() {
           onClose={() => setSidebarOpen(false)}
           filteredSections={filteredSections}
           showAllCriteria={showAllCriteria}
+          isUnlocked={isUnlocked}
         />
 
         {/* Main content */}
@@ -350,8 +375,8 @@ export default function App() {
           className="flex-1 overflow-y-auto bg-background"
         >
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-20">
-            {/* Filter bar when on criteria view */}
-            {activeView === 'criteria' && (
+            {/* Filter bar when on criteria view and unlocked */}
+            {activeView === 'criteria' && isUnlocked && (
               <div className="mb-6 bg-card rounded-xl border border-border p-4 no-print shadow-sm">
                 {/* View toggle: All vs. Section */}
                 <div className="flex items-center gap-2 mb-3 pb-3 border-b border-border">
@@ -523,18 +548,25 @@ export default function App() {
                   exit="exit"
                   transition={pageTransition}
                 >
-                  <CriteriaView
-                    sections={filteredSections}
-                    activeSection={showAllCriteria ? null : activeSection}
-                    activeSubsection={activeSubsection}
-                    searchQuery={searchQuery}
-                    glossary={data.glossary}
-                    navigateTo={navigateTo}
-                    showAllCriteria={showAllCriteria}
-                    expandAllSignal={expandAllSignal}
-                    highlightCriterion={highlightCriterion}
-                    navigateToCriterion={navigateToCriterion}
-                  />
+                  {isUnlocked ? (
+                    <CriteriaView
+                      sections={filteredSections}
+                      activeSection={showAllCriteria ? null : activeSection}
+                      activeSubsection={activeSubsection}
+                      searchQuery={searchQuery}
+                      glossary={data.glossary}
+                      navigateTo={navigateTo}
+                      showAllCriteria={showAllCriteria}
+                      expandAllSignal={expandAllSignal}
+                      highlightCriterion={highlightCriterion}
+                      navigateToCriterion={navigateToCriterion}
+                    />
+                  ) : (
+                    <EmailGate
+                      onUnlock={() => setIsUnlocked(true)}
+                      darkMode={darkMode}
+                    />
+                  )}
                 </motion.div>
               )}
               {activeView === 'glossary' && (

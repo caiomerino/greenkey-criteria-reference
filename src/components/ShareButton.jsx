@@ -7,7 +7,12 @@ export default function ShareButton() {
 
   const currentUrl = typeof window !== 'undefined' ? window.location.href : ''
 
+  const trackEvent = (name, params = {}) => {
+    if (typeof gtag === 'function') gtag('event', name, params)
+  }
+
   const handleCopyLink = async () => {
+    trackEvent('share', { method: 'copy_link' })
     try {
       await navigator.clipboard.writeText(currentUrl)
       setCopied(true)
@@ -41,6 +46,7 @@ export default function ShareButton() {
   }
 
   const handleEmailShare = () => {
+    trackEvent('share', { method: 'email' })
     const subject = encodeURIComponent('Green Key Criteria & Explanatory Notes 2026–2031')
     const body = encodeURIComponent(`Here is the digital reference for Green Key Criteria:\n\n${currentUrl}`)
     window.open(`mailto:?subject=${subject}&body=${body}`)
