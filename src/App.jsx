@@ -10,7 +10,7 @@ import ScopeView from './views/ScopeView'
 import CriteriaView from './views/CriteriaView'
 import GlossaryView from './views/GlossaryView'
 import PrintView from './views/PrintView'
-import EmailGate from './components/EmailGate'
+import EmailPrompt from './components/EmailPrompt'
 import { Tooltip } from './components/ui/tooltip'
 import { Badge } from './components/ui/badge'
 import { Button } from './components/ui/button'
@@ -112,7 +112,6 @@ export default function App() {
   const [expandAllSignal, setExpandAllSignal] = useState(0)   // positive = expand, negative = collapse
   const [highlightCriterion, setHighlightCriterion] = useState(null) // criterion number to auto-expand
   const [highlightGlossaryTerm, setHighlightGlossaryTerm] = useState(null)
-  const [isUnlocked, setIsUnlocked] = useState(() => !!localStorage.getItem('gk-criteria-email'))
   const mainRef = useRef(null)
 
   // Dark mode effect
@@ -366,7 +365,6 @@ export default function App() {
           onClose={() => setSidebarOpen(false)}
           filteredSections={filteredSections}
           showAllCriteria={showAllCriteria}
-          isUnlocked={isUnlocked}
         />
 
         {/* Main content */}
@@ -376,7 +374,7 @@ export default function App() {
         >
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-20">
             {/* Filter bar when on criteria view and unlocked */}
-            {activeView === 'criteria' && isUnlocked && (
+            {activeView === 'criteria' && (
               <div className="mb-6 bg-card rounded-xl border border-border p-4 no-print shadow-sm">
                 {/* View toggle: All vs. Section */}
                 <div className="flex items-center gap-2 mb-3 pb-3 border-b border-border">
@@ -548,25 +546,18 @@ export default function App() {
                   exit="exit"
                   transition={pageTransition}
                 >
-                  {isUnlocked ? (
-                    <CriteriaView
-                      sections={filteredSections}
-                      activeSection={showAllCriteria ? null : activeSection}
-                      activeSubsection={activeSubsection}
-                      searchQuery={searchQuery}
-                      glossary={data.glossary}
-                      navigateTo={navigateTo}
-                      showAllCriteria={showAllCriteria}
-                      expandAllSignal={expandAllSignal}
-                      highlightCriterion={highlightCriterion}
-                      navigateToCriterion={navigateToCriterion}
-                    />
-                  ) : (
-                    <EmailGate
-                      onUnlock={() => setIsUnlocked(true)}
-                      darkMode={darkMode}
-                    />
-                  )}
+                  <CriteriaView
+                    sections={filteredSections}
+                    activeSection={showAllCriteria ? null : activeSection}
+                    activeSubsection={activeSubsection}
+                    searchQuery={searchQuery}
+                    glossary={data.glossary}
+                    navigateTo={navigateTo}
+                    showAllCriteria={showAllCriteria}
+                    expandAllSignal={expandAllSignal}
+                    highlightCriterion={highlightCriterion}
+                    navigateToCriterion={navigateToCriterion}
+                  />
                 </motion.div>
               )}
               {activeView === 'glossary' && (
@@ -605,6 +596,9 @@ export default function App() {
           </footer>
         </main>
       </div>
+
+      {/* Timed email prompt */}
+      <EmailPrompt />
     </div>
   )
 }
