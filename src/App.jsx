@@ -247,7 +247,14 @@ export default function App() {
       subsections: section.subsections.map(sub => ({
         ...sub,
         criteria: sub.criteria.filter(c => {
-          if (typeFilter && c.type !== typeFilter) return false
+          if (typeFilter) {
+            // Dual-type criteria match either filter
+            if (c.type === 'dual') {
+              // ok — dual matches both
+            } else if (c.type !== typeFilter) {
+              return false
+            }
+          }
           if (categoryFilter.length > 0 && !categoryFilter.some(cat => c.categories.includes(cat))) return false
           if (query) {
             const searchIn = `${c.number} ${c.statement} ${c.explanatory_notes}`.toLowerCase()

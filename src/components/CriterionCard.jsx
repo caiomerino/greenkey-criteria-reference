@@ -288,15 +288,32 @@ export default function CriterionCard({ criterion, searchQuery, autoExpand, navi
     if (autoExpand) setExpanded(true)
   }, [autoExpand])
   
-  const { number, statement, type, categories, has_national_note, explanatory_notes } = criterion
-  
+  const { number, statement, type, categories, has_national_note, explanatory_notes,
+          imperative_categories, guideline_categories } = criterion
+
+  const isDual = type === 'dual'
+  const impCats = imperative_categories || (type === 'imperative' ? categories : [])
+  const guiCats = guideline_categories || (type === 'guideline' ? categories : [])
+
+  // Tooltip text per-category indicating IMP or GUI applicability for dual criteria
+  const categoryApplicability = (cat) => {
+    if (!isDual) return CATEGORY_LABELS[cat] || cat
+    const role = impCats.includes(cat) ? 'Imperative' : 'Guideline'
+    return `${CATEGORY_LABELS[cat] || cat} — ${role}`
+  }
+
   const handleToggle = () => {
     if (!expanded) {
       trackEvent('criterion_expand', { criterion_number: number })
     }
     setExpanded(!expanded)
   }
-  
+
+  // Colour for the number badge — gradient half-half for dual
+  const numberBadgeClass = isDual
+    ? 'bg-gradient-to-br from-gk-blue from-50% to-gk-green-web to-50%'
+    : type === 'imperative' ? 'bg-gk-blue' : 'bg-gk-green-web'
+
   return (
     <Card className={`overflow-hidden transition-all duration-200 hover:shadow-md ${
       autoExpand
@@ -307,30 +324,51 @@ export default function CriterionCard({ criterion, searchQuery, autoExpand, navi
         onClick={handleToggle}
         className="w-full text-left p-4 sm:p-5 flex items-start gap-3 hover:bg-accent/10 transition-colors"
       >
-        <div className={`shrink-0 w-12 h-12 rounded-lg flex items-center justify-center text-white font-bold text-sm ${
-          type === 'imperative' ? 'bg-gk-blue' : 'bg-gk-green-web'
-        }`}>
+        <div className={`shrink-0 w-12 h-12 rounded-lg flex items-center justify-center text-white font-bold text-sm ${numberBadgeClass}`}>
           {number}
         </div>
-        
+
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-foreground leading-relaxed pr-4">
             {searchQuery ? highlightText(statement, searchQuery) : statement}
           </p>
-          
+
           <div className="flex flex-wrap items-center gap-1.5 mt-2">
-            <Badge variant={type === 'imperative' ? 'imperative' : 'guideline'}>
-              {type === 'imperative' ? 'Imperative' : 'Guideline'}
-            </Badge>
-            
-            {categories.map(cat => (
-              <Tooltip key={cat} content={CATEGORY_LABELS[cat] || cat} position="top">
-                <Badge variant="category" className="cursor-help">
-                  {cat}
-                </Badge>
+            {isDual ? (
+              <Tooltip
+                content={`Imperative for ${impCats.join(', ')}; Guideline for ${guiCats.join(', ')}`}
+                position="top"
+              >
+                <span className="inline-flex items-center rounded-md overflow-hidden text-[10px] font-bold uppercase tracking-wide cursor-help">
+                  <span className="bg-gk-blue text-white px-2 py-0.5">I</span>
+                  <span className="bg-gk-green-web text-white px-2 py-0.5">G</span>
+                </span>
               </Tooltip>
-            ))}
-            
+            ) : (
+              <Badge variant={type === 'imperative' ? 'imperative' : 'guideline'}>
+                {type === 'imperative' ? 'Imperative' : 'Guideline'}
+              </Badge>
+            )}
+
+            {categories.map(cat => {
+              // For dual criteria, colour-code each category chip
+              const dualClass = isDual
+                ? (impCats.includes(cat)
+                    ? 'border-[hsl(var(--gk-blue))] bg-[hsl(var(--gk-blue))]/10 text-[hsl(var(--gk-blue))] hover:bg-[hsl(var(--gk-blue))]/15 dark:text-blue-300 dark:bg-[hsl(var(--gk-blue))]/20'
+                    : 'border-[hsl(var(--gk-green))] bg-[hsl(var(--gk-green))]/10 text-[hsl(var(--gk-green))] hover:bg-[hsl(var(--gk-green))]/15 dark:text-green-300 dark:bg-[hsl(var(--gk-green))]/20')
+                : ''
+              return (
+                <Tooltip key={cat} content={categoryApplicability(cat)} position="top">
+                  <Badge
+                    variant={isDual ? undefined : 'category'}
+                    className={`cursor-help ${isDual ? `border ${dualClass}` : ''}`}
+                  >
+                    {cat}
+                  </Badge>
+                </Tooltip>
+              )
+            })}
+
             {has_national_note && (
               <Tooltip content="This criterion may be adapted by national operators to reflect local regulations and conditions." position="top">
                 <span className="flex items-center gap-0.5 text-[10px] text-amber-600 dark:text-amber-400 font-semibold">

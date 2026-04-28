@@ -310,12 +310,25 @@ export default function PrintView({ data }) {
                       <span className="print-criterion-statement">{criterion.statement}</span>
                     </div>
                     <div className="print-criterion-meta">
-                      <span className={`print-badge ${criterion.type === 'imperative' ? 'print-badge-i' : 'print-badge-g'}`}>
-                        {criterion.type === 'imperative' ? 'Imperative' : 'Guideline'}
-                      </span>
-                      <span className="print-categories">
-                        Categories: {criterion.categories.join(', ')}
-                      </span>
+                      {criterion.type === 'dual' ? (
+                        <>
+                          <span className="print-badge print-badge-i">Imperative</span>
+                          <span className="print-badge print-badge-g">Guideline</span>
+                          <span className="print-categories">
+                            Imperative for: {(criterion.imperative_categories || []).join(', ')} ·
+                            Guideline for: {(criterion.guideline_categories || []).join(', ')}
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <span className={`print-badge ${criterion.type === 'imperative' ? 'print-badge-i' : 'print-badge-g'}`}>
+                            {criterion.type === 'imperative' ? 'Imperative' : 'Guideline'}
+                          </span>
+                          <span className="print-categories">
+                            Categories: {criterion.categories.join(', ')}
+                          </span>
+                        </>
+                      )}
                       {criterion.has_national_note && (
                         <span className="print-national-flag">ⓘ National adaptation</span>
                       )}

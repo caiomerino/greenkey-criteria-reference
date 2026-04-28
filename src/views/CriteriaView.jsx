@@ -115,12 +115,15 @@ export default function CriteriaView({
     )
   }
 
+  const isImp = (c) => c.type === 'imperative' || c.type === 'dual'
+  const isGui = (c) => c.type === 'guideline'  || c.type === 'dual'
+
   const allTotal = sectionsToShow.reduce((acc, s) =>
     acc + s.subsections.reduce((a, ss) => a + ss.criteria.length, 0), 0)
   const allImperative = sectionsToShow.reduce((acc, s) =>
-    acc + s.subsections.reduce((a, ss) => a + ss.criteria.filter(c => c.type === 'imperative').length, 0), 0)
+    acc + s.subsections.reduce((a, ss) => a + ss.criteria.filter(isImp).length, 0), 0)
   const allGuideline = sectionsToShow.reduce((acc, s) =>
-    acc + s.subsections.reduce((a, ss) => a + ss.criteria.filter(c => c.type === 'guideline').length, 0), 0)
+    acc + s.subsections.reduce((a, ss) => a + ss.criteria.filter(isGui).length, 0), 0)
 
   return (
     <div className="space-y-6">
@@ -156,9 +159,9 @@ export default function CriteriaView({
 
         const totalCriteria = subsectionsToShow.reduce((acc, ss) => acc + ss.criteria.length, 0)
         const imperativeCount = subsectionsToShow.reduce((acc, ss) =>
-          acc + ss.criteria.filter(c => c.type === 'imperative').length, 0)
+          acc + ss.criteria.filter(isImp).length, 0)
         const guidelineCount = subsectionsToShow.reduce((acc, ss) =>
-          acc + ss.criteria.filter(c => c.type === 'guideline').length, 0)
+          acc + ss.criteria.filter(isGui).length, 0)
 
         return (
           <div key={section.name}>
